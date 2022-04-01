@@ -225,22 +225,22 @@ class E_CYCLE(Base_Function_Block):
         self.add_event('STOP', Event(self, STOP))
         self.add_event('EO', Event(self))
         self.add_variable('DT', Variable(self, DT))
-        self.start_time = None
+        self.start_time = 0
         self.running = False
 
-        def algorithm(self):
-            if self.START.active:
-                self.running = True
-            if self.STOP.active:
-                self.running = False
-            if self.running:
-                if time.time() - self.start_time >= self.DT.value:
-                    self.EO.active = True
-                    self.start_time = time.time()
-                else:
-                    self.EO.active = False	
+    def algorithm(self):
+        if self.START.active:
+            self.running = True
+        if self.STOP.active:
+            self.running = False
+        if self.running:
+            if time.time() - self.start_time >= self.DT.value:
+                self.EO.active = True
+                self.start_time = time.time()
+            else:
+                self.EO.active = False	
 
-            self.run()
+        self.run()
 
 
 class IO_WRITER(Base_Function_Block):
@@ -334,65 +334,65 @@ class PID_SIMPLE(Base_Function_Block):
             pass # control function
 
 class world():
-	def __init__(self):
-		self.function_blocks = set()
+    def __init__(self):
+        self.function_blocks = set()
 
-	def add_function_block(self, function_block):
-		self.function_blocks.add(function_block)
+    def add_function_block(self, function_block):
+        self.function_blocks.add(function_block)
 
-	def remove_function_block(self, function_block):
-		self.function_blocks.discard(function_block)
+    def remove_function_block(self, function_block):
+        self.function_blocks.discard(function_block)
 
-	def create_graph(self):
-		for block in self.function_blocks:
-			for event in block.events.values():
-				self.graph[event] = set() 	
-				for in_event in event.connections:
-					self.graph[event].add(in_event)
+    def create_graph(self):
+        for block in self.function_blocks:
+            for event in block.events.values():
+                self.graph[event] = set() 	
+                for in_event in event.connections:
+                    self.graph[event].add(in_event)
 
-	def read_through(self, block, path):
-		empty_block_flag = True
-		for event in block.events.values():
-			for connection in event.connections:
-				if connection != set():
-					empty_block_flag = False
+    def read_through(self, block, path):
+        empty_block_flag = True
+        for event in block.events.values():
+            for connection in event.connections:
+                if connection != set():
+                    empty_block_flag = False
 
-		if empty_block_flag:
-			self.paths.append(path)
-			del path[-1]
-		for event in block.events.values():
-			for in_event in event.connections:
-				path.append(in_event)
-				self.read_through(in_event.block, path)
+        if empty_block_flag:
+            self.paths.append(path)
+            del path[-1]
+        for event in block.events.values():
+            for in_event in event.connections:
+                path.append(in_event)
+                self.read_through(in_event.block, path)
 
-	def connect_events(self, in_event, out_event):
-		out_event.add_connection(in_event)
+    def connect_events(self, in_event, out_event):
+        out_event.add_connection(in_event)
 
-	def connect_variables(self, in_var, out_var):
-		out_var.add_connection(in_var)
+    def connect_variables(self, in_var, out_var):
+        out_var.add_connection(in_var)
 
-	def function_block_states(self):
-		for fb in self.function_blocks:
-			for event in fb.events.items():
-				print(event[0], ':', event[1].active)
+    def function_block_states(self):
+        for fb in self.function_blocks:
+            for event in fb.events.items():
+                print(event[0], ':', event[1].active)
 
-	def simple_run_through(self, i_fb):
-		i_fb.algorithm()
-		for event in i_fb.events.values():
-			for i_event in event.connections:
-				self.simple_run_through(i_event.block)
+    def simple_run_through(self, i_fb):
+        i_fb.algorithm()
+        for event in i_fb.events.values():
+            for i_event in event.connections:
+                self.simple_run_through(i_event.block)
 
-	def execute(self, frequency, i_fb, duration=0):
-		timer = time.time()	
-		cycler = time.time()
-		while(1):
-			if duration != 0:
-				if time.time()-timer >= duration:
-					break		
-			if time.time() - cycler >= 1/frequency:
-				self.simple_run_through(i_fb)
-				self.function_block_states()
-				cycler = time.time()		
+    def execute(self, frequency, i_fb, duration=0):
+        timer = time.time()	
+        cycler = time.time()
+        while(1):
+            if duration != 0:
+                if time.time()-timer >= duration:
+                    break		
+            if time.time() - cycler >= 1/frequency:
+                self.simple_run_through(i_fb)
+                self.function_block_states()
+                cycler = time.time()		
 
 
 

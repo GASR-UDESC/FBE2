@@ -119,7 +119,7 @@ def automata_to_fb(automata):
         canvas.connect_events(locals()["P_" + event[0]].EO, getattr(OR, 'REQ_' + event[0]))
         canvas.connect_events(OR.EO, ECC_fb.REQ)
 
-    return canvas
+    return canvas, ECC_fb
 
 
 

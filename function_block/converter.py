@@ -104,21 +104,26 @@ def automata_to_fb(automata):
 
     for event in ECC_fb.ECC.events:
 
-        locals()["IN_" + event[0]] = IO_READER(INIT=False, REQ=False, QI=True, PARAMS=None, SD_1=None)
-        canvas.add_function_block(locals()["IN_" + event[0]])
-        locals()["IN_" + event[0]].add_variable('IVAL', Variable(locals()["IN_" + event[0]], False)) # creates IVAL variable in IO_READER fb, sets it to False
+        setattr(canvas, "IN_" + event[0], IO_READER(INIT=False, REQ=False, QI=True, PARAMS=None, SD_1=None))
+        reader = getattr(canvas, "IN_" + event[0])
+        canvas.add_function_block(reader)
+        reader.add_variable('IVAL', Variable(reader, False)) # creates IVAL variable in IO_READER fb, sets it to False
+        print("reader created")
+        setattr(canvas, "P_" + event[0], PERMIT(EI=False, PERMIT = False))
+        permit = getattr(canvas, "P_" + event[0])
+        canvas.add_function_block(permit)
+        print("permit created")
 
-        locals()["P_" + event[0]] = PERMIT(EI=False, PERMIT = False)
-        canvas.add_function_block(locals()["P_"+event[0]])
+        canvas.connect_events(reader.CNF, permit.EI)
+        canvas.connect_variables(reader.RD_1, permit.PERMIT)
 
-        canvas.connect_events(locals()["IN_" + event[0]].CNF, locals()["P_" + event[0]].EI)
-        canvas.connect_variables(locals()["IN_" + event[0]].RD_1, locals()["P_" + event[0]].PERMIT)
-
-        canvas.connect_events(locals()["P_" + event[0]].EO, getattr(ECC_fb, event[0]))
+        canvas.connect_events(permit.EO, getattr(ECC_fb, event[0]))
         OR.add_event("REQ_" + event[0], Event(OR, False))
-        canvas.connect_events(locals()["P_" + event[0]].EO, getattr(OR, 'REQ_' + event[0]))
+        canvas.connect_events(permit.EO, getattr(OR, 'REQ_' + event[0]))
         canvas.connect_events(OR.EO, ECC_fb.REQ)
+		
 
+	
     return canvas, ECC_fb
 
 

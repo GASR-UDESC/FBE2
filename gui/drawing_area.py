@@ -1,78 +1,124 @@
 #!/usr/bin/python3
 
 import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GdkPixbuf
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk
+gi.require_version("Gtk", "3.0")
 import cairo
 
-class DrawingAreaFrame(Gtk.Frame):
-    def __init__(self, css=None, border_width=0):
-        super().__init__()
-        self.set_border_width(border_width)
-        self.set_size_request(100, 100)
-        self.vexpand = True
-        self.hexpand = True
-        self.surface = None
 
-        self.area = Gtk.DrawingArea()
-        self.add(self.area)
+class MouseButtons:
 
-        self.area.connect("draw", self.on_draw)
-        self.area.connect('configure-event', self.on_configure)   
+    LEFT_BUTTON = 1
+    RIGHT_BUTTON = 3
 
-    def init_surface(self, area):
-        # Destroy previous buffer
-        if self.surface is not None:
-            self.surface.finish()
-            self.surface = None
 
-        # Create a new buffer
-        self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, area.get_allocated_width(), area.get_allocated_height())
+class Example(Gtk.Window):
 
-    def redraw(self): 
-        self.init_surface(self.area)
-        context = cairo.Context(self.surface)
-        context.scale(self.surface.get_width(), self.surface.get_height())
-        self.do_drawing(context)
-        self.surface.flush()
-
-    def on_configure(self, area, event, data=None): 
-        self.redraw()
-        return False
-
-    def on_draw(self, area, context):
-        if self.surface is not None:
-            context.set_source_surface(self.surface, 0.0, 0.0)            
-            context.paint()
-        else:
-            print('Invalid surface')
-        return False
-
-    def draw_radial_gradient_rect(self, ctx):
-        x0, y0 = 0.3, 0.3
-        x1, y1 = 0.5, 0.5
-        r0 = 0
-        r1 = 1        
-        pattern = cairo.RadialGradient(x0, y0, r0, x1, y1, r1) 
-        pattern.add_color_stop_rgba(0, 1,1,0.5, 1)   
-        pattern.add_color_stop_rgba(1, 0.2,0.4,0.1, 1)   
-        ctx.rectangle(0, 0, 1, 1)       
-        ctx.set_source(pattern)
-        ctx.fill()         
-
-    def do_drawing(self, ctx):
-        self.draw_radial_gradient_rect(ctx)        
-
-class Window(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self)
-        self.set_title("Test Draw Radial Gradient")
-        self.set_default_size(800, 600)
-        self.connect("destroy", Gtk.main_quit)    
+        super(Example, self).__init__()
 
-        frame = DrawingAreaFrame()        
-        self.add(frame)
+        self.init_ui()
 
-window = Window()
-window.show_all()
-Gtk.main()
+
+    def init_ui(self):    
+
+        self.darea = Gtk.DrawingArea()
+        self.darea.connect("draw", self.on_draw)
+        self.darea.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)        
+        self.add(self.darea)
+
+        self.coords = []
+        self.i_pos = [0,0]
+
+        self.darea.connect("button-press-event", self.on_button_press)
+
+        self.set_title("Lines")
+        self.resize(500, 400)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.connect("delete-event", Gtk.main_quit)
+        self.show_all()
+
+
+    def on_draw(self, wid, cr):
+        print(len(self.i_pos))
+        # ~ self.draw_line_conections(wid, cr)   
+        for i in range(int(len(self.i_pos)/2)):
+            print(self.i_pos[2*i])
+            print(self.i_pos[2*i+1])
+            self.draw_function_block(wid, cr, self.i_pos[2*i], self.i_pos[2*i+1])
+
+    def draw_line_conections(self, wid, cr):
+        cr.set_source_rgb(0, 0, 0)
+        cr.set_line_width(0.5)
+
+        for i in self.coords:
+            for j in self.coords:
+
+                cr.move_to(i[0], i[1])
+                cr.line_to(j[0], j[1]) 
+                cr.stroke()
+
+        del self.coords[:] 
+
+    def draw_function_block(self, wid, cr, i_pos_x, i_pos_y):
+        cr.set_source_rgb(0, 0, 0)
+        cr.set_line_width(0.5)
+        print("I ran")
+        h_length = 12*5
+        b_vert_length = 12*5
+        b_neck_width = h_length/6
+        b_neck_height = 4*5
+        t_vert_length = 8*5
+
+
+        cr.move_to(i_pos_x, i_pos_y)
+        cr.line_to(i_pos_x, i_pos_y + b_vert_length)
+        cr.move_to(i_pos_x, i_pos_y + b_vert_length)
+        cr.line_to(i_pos_x + b_neck_width, i_pos_y + b_vert_length)
+        cr.move_to(i_pos_x + b_neck_width, i_pos_y + b_vert_length)
+        cr.line_to(i_pos_x + b_neck_width, i_pos_y + b_vert_length + b_neck_height)
+        cr.move_to(i_pos_x + b_neck_width, i_pos_y + b_vert_length + b_neck_height)
+        cr.line_to(i_pos_x, i_pos_y + b_vert_length + b_neck_height)
+        cr.move_to(i_pos_x, i_pos_y + b_vert_length + b_neck_height)
+        cr.line_to(i_pos_x, i_pos_y + b_vert_length + b_neck_height + t_vert_length)
+        cr.move_to(i_pos_x, i_pos_y + b_vert_length + b_neck_height + t_vert_length)
+        cr.line_to(i_pos_x + h_length, i_pos_y + b_vert_length + b_neck_height + t_vert_length) 
+        cr.move_to(i_pos_x + h_length, i_pos_y + b_vert_length + b_neck_height + t_vert_length)
+        cr.line_to(i_pos_x + h_length, i_pos_y + b_vert_length + b_neck_height)
+        cr.move_to(i_pos_x + h_length, i_pos_y + b_vert_length + b_neck_height)
+        cr.line_to(i_pos_x + h_length - b_neck_width, i_pos_y + b_vert_length + b_neck_height)
+        cr.move_to(i_pos_x + h_length - b_neck_width, i_pos_y + b_vert_length + b_neck_height)
+        cr.line_to(i_pos_x + h_length - b_neck_width, i_pos_y + b_vert_length)
+        cr.move_to(i_pos_x + h_length - b_neck_width, i_pos_y + b_vert_length)
+        cr.line_to(i_pos_x + h_length, i_pos_y + b_vert_length)
+        cr.move_to(i_pos_x + h_length, i_pos_y + b_vert_length)
+        cr.line_to(i_pos_x + h_length, i_pos_y)
+        cr.move_to(i_pos_x + h_length, i_pos_y)
+        cr.line_to(i_pos_x, i_pos_y)
+        cr.stroke()
+
+    def on_button_press(self, w, e):
+
+        if e.type == Gdk.EventType.BUTTON_PRESS \
+                and e.button == MouseButtons.LEFT_BUTTON:
+
+                    self.coords.append([e.x, e.y])
+                    self.i_pos.append(e.x)
+                    self.i_pos.append(e.y)
+                    self.darea.queue_draw()  
+
+        if e.type == Gdk.EventType.BUTTON_PRESS \
+                and e.button == MouseButtons.RIGHT_BUTTON:
+
+                    self.darea.queue_draw()           
+
+
+def main():
+
+    app = Example()
+    Gtk.main()
+
+
+if __name__ == "__main__":    
+    main()

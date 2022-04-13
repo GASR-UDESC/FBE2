@@ -18,7 +18,7 @@ class Base_Function_Block():
         setattr(self, name, event)
 
     def add_variable(self, name, variable):
-        self.variables['name'] = variable
+        self.variables[name] = variable
         setattr(self, name, variable)
 
     def remove_event(self, name):
@@ -98,7 +98,7 @@ class PERMIT(Base_Function_Block):
 
 #Contador
 class E_CTU(Base_Function_Block):
-    def __init__(self, PV, CU, R, Q, CV**kwargs):
+    def __init__(self, PV, CU, R, Q, CV, **kwargs):
         super().__init__(**kwargs)
 
         self.add_event('CU', Event(self,CU, in_event=True))	

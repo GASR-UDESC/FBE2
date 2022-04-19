@@ -5,6 +5,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from gi.repository import Gio
 import sys
+from fb_editor import Function_Block_Editor
 
 
 class Window(Gtk.ApplicationWindow):
@@ -12,37 +13,20 @@ class Window(Gtk.ApplicationWindow):
     def __init__(self, app):
         super(Window, self).__init__(title="GASR-FBE2", application=app)
 
-        self.grid = Gtk.Grid()
+        self.box = Gtk.Box(orientation = Gtk.Orientation.VERTICAL)
 
-        menubar = Gtk.MenuBar()
+        self.menubar = Gtk.MenuBar()
+        function_block_editor = Function_Block_Editor()
+        fmi = self.create_sub_menu("File")
+        self.create_simple_menu_item(fmi, New=self.quitApp, Save=self.quitApp, Save_As=self.quitApp)
 
-        fmi = Gtk.MenuItem.new_with_label("File")
+        nmi = self.create_sub_menu('Not File')
+        self.create_simple_menu_item(nmi, DONT_SAVE = self.quitApp)
 
-        menu = Gtk.Menu()
-        emi = Gtk.MenuItem.new_with_label("New") 
-        emi.connect("activate", self.quitApp)
-        menu.append(emi)
+        self.box.pack_start(self.menubar, False, True, 0)
+        self.box.pack_start(function_block_editor, True, True, 0)	
 
-        emi = Gtk.MenuItem.new_with_label("Save") 
-        emi.connect("activate", self.init_drawing_area)
-        menu.append(emi)
-
-        emi = Gtk.MenuItem.new_with_label("Save as") 
-        emi.connect("activate", self.quitApp)
-        menu.append(emi)
-
-
-        emi = Gtk.MenuItem.new_with_label("Save as") 
-        emi.connect("activate", self.quitApp)
-        menu.append(emi)
-
-        fmi.set_submenu(menu)
-
-        menubar.add(fmi)
-
-        self.grid.attach(menubar, 0, 1, 1, 1)
-
-        self.add(self.grid)
+        self.add(self.box)
 
         self.set_default_size(400, 600)
 
@@ -50,23 +34,21 @@ class Window(Gtk.ApplicationWindow):
 
         app.quit()    
 
-    def init_drawing_area(self, par):
-        darea = Gtk.DrawingArea()
-        darea.connect("draw", self.on_draw)
-        self.grid.attach(darea, 0, 0, 1, 1)
+    def create_sub_menu(self, label):
+        sub_menu = Gtk.MenuItem.new_with_label(label)
+        self.menubar.add(sub_menu)
+        return sub_menu
 
-        self.set_title("Basic Shapes")
-        self.set_default_size(400, 400)
+    def create_simple_menu_item(self, sub_menu, **kwargs): # kwargs are so-> label: function
+        menu = Gtk.Menu()
 
-        self.connect("destroy", Gtk.main_quit)
+        for label in kwargs.keys():
+            menu_item = Gtk.MenuItem.new_with_label(label)
+            menu_item.connect("activate", kwargs[label])
+            menu.append(menu_item)
+        sub_menu.set_submenu(menu)
 
-    def on_draw(self, da, ctx):
 
-        ctx.set_source_rgb(0.6, 0.6, 0.6)
-
-        ctx.rectangle(20, 20, 120, 80)
-        ctx.rectangle(180, 20, 80, 80)
-        ctx.fill()
 
 
 class Application(Gtk.Application):

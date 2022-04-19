@@ -3,9 +3,10 @@
 import time
 
 class Base_Function_Block():
-    def __init__(self, **kwargs):
+    def __init__(self, name, **kwargs):
         self.events = dict()
         self.variables = dict() 
+        self.name = name
 
     def get_event_output(self, event):
         return self.event.active
@@ -18,7 +19,7 @@ class Base_Function_Block():
         setattr(self, name, event)
 
     def add_variable(self, name, variable):
-        self.variables['name'] = variable
+        self.variables[name] = variable
         setattr(self, name, variable)
 
     def remove_event(self, name):
@@ -41,10 +42,11 @@ class Base_Function_Block():
 
 
 class Event(): 
-    def __init__(self, block, active=False):
+    def __init__(self, block, active=False, in_event=False):
         self.block = block
         self.active = active
         self.connections = set()
+        self.in_event = in_event
 
     def activate(self, active=False):
         self.active = active
@@ -61,10 +63,11 @@ class Event():
 
 
 class Variable():
-    def __init__(self, block, value=None):
+    def __init__(self, block, value=None, in_var=False):
         self.value = value
         self.block = block
         self.connections = set()
+        self.in_var = in_var
 
     def set_value(self, value=None):
         self.value = value
@@ -78,14 +81,14 @@ class Variable():
 
 
 class PERMIT(Base_Function_Block):
-    def __init__(self, EI, PERMIT, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, EI, PERMIT, name="PERMIT", **kwargs):
+        super().__init__(name, **kwargs)
 
         # ~ self.EI = Event(EI)
-        self.add_event('EI', Event(self, EI))
+        self.add_event('EI', Event(self, EI, in_event=True))
         self.add_event('EO', Event(self))	
 
-        self.PERMIT = Variable(self, value=PERMIT)
+        self.add_variable('PERMIT', Variable(self, PERMIT, in_var=True))
 
     def algorithm(self):
         if self.EI.active and self.PERMIT.value:
@@ -96,16 +99,16 @@ class PERMIT(Base_Function_Block):
 
 #Contador
 class E_CTU(Base_Function_Block):
-    def __init__(self, PV, CU, R, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, PV, CU, R, Q, CV, name="E_CTU", **kwargs):
+        super().__init__(name, **kwargs)
 
-        self.add_event('CU', Event(self,CU))	
-        self.add_event('R', Event(self, R))
+        self.add_event('CU', Event(self,CU, in_event=True))	
+        self.add_event('R', Event(self, R, in_event=True))
         self.add_event('CUO', Event(self))
         self.add_event('RO', Event(self))
-        self.add_variable('PV', Variable(self, PV))
-        self.add_variable('Q', Variable(self, value=0))
-        self.add_variable('CV', Variable(self,self, value=0))
+        self.add_variable('PV', Variable(self, PV, in_var=True))
+        self.add_variable('Q', Variable(self, Q, in_var=True))
+        self.add_variable('CV', Variable(self, CV, in_var=True))
 
     def algorithm(self):
         if self.R.active:
@@ -130,8 +133,8 @@ class E_CTU(Base_Function_Block):
             self.Q.value = 0
 
 class E_MERGE(Base_Function_Block):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)		
+    def __init__(self, name="E_MERGE", **kwargs):
+        super().__init__(name, **kwargs)		
 
         self.add_event("EO", Event(self))
 
@@ -144,15 +147,15 @@ class E_MERGE(Base_Function_Block):
 
 #Demultiplexação		
 class E_DEMUX(Base_Function_Block):
-    def __init__(self, EI, K, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, EI, K, name='E_DEMUX', **kwargs):
+        super().__init__(name, **kwargs)
 
-        self.add_event('EI', Event(self, EI))
+        self.add_event('EI', Event(self, EI, in_event=True))
         self.add_event('EO0', Event(self))				
         self.add_event('EO1', Event(self))
         self.add_event('EO2', Event(self))
         self.add_event('EO3', Event(self))
-        self.add_variable('K', Variable(self, K))
+        self.add_variable('K', Variable(self, K, in_var=True))
 
     def algorithm(self):
         if self.EI.active:
@@ -181,12 +184,12 @@ class E_DEMUX(Base_Function_Block):
 
 
 class E_DELAY(Base_Function_Block):
-    def __init__(self, START=False, STOP=False, DT=1, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, START=False, STOP=False, DT=1, name='E_DELAY', **kwargs):
+        super().__init__(name, **kwargs)
 
-        self.add_event('START', Event(self, START))
-        self.add_event('STOP', Event(self, STOP))
-        self.add_variable('DT', Variable(self, DT))
+        self.add_event('START', Event(self, START, in_event=True))
+        self.add_event('STOP', Event(self, STOP, in_event=True))
+        self.add_variable('DT', Variable(self, DT, in_var=True))
         self.add_event('EO', Event(self))
         self.first_run = True
         self.start_time = None
@@ -207,8 +210,8 @@ class E_DELAY(Base_Function_Block):
         self.run()
 
 class E_RESTART(Base_Function_Block):
-    def __init__(self, COLD=False, WARM=False, STOP=False, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, COLD=False, WARM=False, STOP=False, name='E_RESTART', **kwargs):
+        super().__init__(name, **kwargs)
 
         self.add_event('COLD', Event(self, COLD))
         self.add_event('WARM', Event(self, WARM))		
@@ -218,13 +221,13 @@ class E_RESTART(Base_Function_Block):
         self.run()
 
 class E_CYCLE(Base_Function_Block):
-    def __init__(self, DT, STOP, START, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, DT, STOP, START, name='E_CYCLE', **kwargs):
+        super().__init__(name, **kwargs)
 
-        self.add_event('START', Event(self, START))
-        self.add_event('STOP', Event(self, STOP))
+        self.add_event('START', Event(self, START, in_event=True))
+        self.add_event('STOP', Event(self, STOP, in_event=True))
         self.add_event('EO', Event(self))
-        self.add_variable('DT', Variable(self, DT))
+        self.add_variable('DT', Variable(self, DT, in_var=True))
         self.start_time = 0
         self.running = False
 
@@ -244,17 +247,17 @@ class E_CYCLE(Base_Function_Block):
 
 
 class IO_WRITER(Base_Function_Block):
-    def __init__(self, INIT, REQ, QI, PARAMS, SD_1, SD_2, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, INIT, REQ, QI, PARAMS, SD_1, SD_2, name="IO_READER", **kwargs):
+        super().__init__(name, **kwargs)
 
-        self.add_event('INIT', Event(self, INIT))
-        self.add_event('REQ', Event(self, REQ))
+        self.add_event('INIT', Event(self, INIT, in_event=True))
+        self.add_event('REQ', Event(self, REQ, in_event=True))
         self.add_event('INITO', Event(self))
         self.add_event('CNF', Event(self))
-        self.add_variable('QI', Variable(self, QI))
-        self.add_variable('PARAMS', Variable(self, PARAMS))
-        self.add_variable('SD_1', Variable(self, SD_1)) # output address
-        self.add_variable('SD_2', Variable(self, SD_2)) # output value
+        self.add_variable('QI', Variable(self, QI, in_var=True))
+        self.add_variable('PARAMS', Variable(self, PARAMS, in_var=True))
+        self.add_variable('SD_1', Variable(self, SD_1, in_var=True)) # output address
+        self.add_variable('SD_2', Variable(self, SD_2, in_var=True)) # output value
         self.add_variable('QO', Variable(self))
         self.add_variable('STATUS', Variable(self))
         self.add_variable('RD_1', Variable(self))
@@ -276,16 +279,16 @@ class IO_WRITER(Base_Function_Block):
         pass
 
 class IO_READER(Base_Function_Block):
-    def __init__(self, INIT, REQ, QI, PARAMS, SD_1, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, INIT, REQ, QI, PARAMS, SD_1, name="IO_READER", **kwargs):
+        super().__init__(name, **kwargs)
 
-        self.add_event('INIT', Event(self, INIT))
-        self.add_event('REQ', Event(self, REQ))
+        self.add_event('INIT', Event(self, INIT, in_event=True))
+        self.add_event('REQ', Event(self, REQ, in_event=True))
         self.add_event('INITO', Event(self))
         self.add_event('CNF', Event(self))
-        self.add_variable('QI', Variable(self, QI))
-        self.add_variable('PARAMS', Variable(self, PARAMS))
-        self.add_variable('SD_1', Variable(self, SD_1)) # input address
+        self.add_variable('QI', Variable(self, QI, in_var=True))
+        self.add_variable('PARAMS', Variable(self, PARAMS, in_var=True))
+        self.add_variable('SD_1', Variable(self, SD_1, in_var=True)) # input address
         self.add_variable('QO', Variable(self))
         self.add_variable('STATUS', Variable(self))
         self.add_variable('RD_1', Variable(self))
@@ -311,11 +314,11 @@ class IO_READER(Base_Function_Block):
 
 
 class PID_SIMPLE(Base_Function_Block):
-    def __init__(self, INIT, REQ, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, INIT, REQ, name="PID_SIMPLE", **kwargs):
+        super().__init__(name, **kwargs)
 
-        self.add_event('INIT', Event(self, INIT))		
-        self.add_event('REQ', Event(self, REQ))
+        self.add_event('INIT', Event(self, INIT, in_event=True))		
+        self.add_event('REQ', Event(self, REQ, in_event=True))
         self.add_event('INITO', Event(self))		
         self.add_event('CNF', Event(self))	
         # Variables go here

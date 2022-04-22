@@ -1,25 +1,25 @@
 #!/usr/bin/python3
-
+import sys
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 gi.require_version("Gtk", "3.0")
 import cairo
 import math
-from function_block_edit import *
+from function_block import *
 
 
 class Function_Block_Renderer(Gtk.DrawingArea):
     def __init__(self, fb_diagram=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fb_diagram = fb_diagram
-        self.i_pos = []
-
-
     
-    def draw_function_block(self, wid, cr, i_pos_x, i_pos_y, fb, gain):
+    def draw_function_block(self, wid, cr, fb, gain):
         cr.set_source_rgb(0, 0, 0)
         cr.set_line_width(0.7)
+        
+        i_pos_x = fb.pos[0]
+        i_pos_y = fb.pos[1]
 
         def get_fb_measurements(fb):
             in_events = list()

@@ -3,7 +3,7 @@
 import time
 
 class Base_Function_Block():
-    def __init__(self, name, **kwargs):
+    def __init__(self, name="NEW_FB", **kwargs):
         self.events = dict()
         self.variables = dict() 
         self.name = name

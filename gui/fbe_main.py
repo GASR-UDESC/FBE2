@@ -6,14 +6,16 @@ from gi.repository import Gtk
 from gi.repository import Gio
 import sys
 from fb_editor import Function_Block_Editor
+from fbe_listbox import FBE_ListBox
 
 
 class Window(Gtk.ApplicationWindow):
-
     def __init__(self, app):
         super(Window, self).__init__(title="GASR-FBE2", application=app)
 
+        self.main_box = Gtk.Box(orientation = Gtk.Orientation.HORIZONTAL)
         self.box = Gtk.Box(orientation = Gtk.Orientation.VERTICAL)
+        self.main_box.pack_start(self.box, True, True, 0)
 
         self.menubar = Gtk.MenuBar()
         function_block_editor = Function_Block_Editor()
@@ -23,12 +25,15 @@ class Window(Gtk.ApplicationWindow):
         nmi = self.create_sub_menu('Not File')
         self.create_simple_menu_item(nmi, DONT_SAVE = self.quitApp)
 
+        listbox = FBE_ListBox(function_block_editor)
+
         self.box.pack_start(self.menubar, False, True, 0)
         self.box.pack_start(function_block_editor, True, True, 0)	
+        self.main_box.pack_start(listbox, False, False, 0)
 
-        self.add(self.box)
+        self.add(self.main_box)
 
-        self.set_default_size(400, 600)
+        self.set_default_size(1000, 600)
 
     def quitApp(self, par):
 

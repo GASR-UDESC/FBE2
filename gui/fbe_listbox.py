@@ -31,8 +31,10 @@ class FBE_ListBox(Gtk.Box):
         vbox_1 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         hbox.pack_start(vbox_1, True, True, 0)
 
-        self.add_toggle_button("Add Function Block", self.add_function_block, vbox_1)
-        # ~ self.add_button("Remove Function Block", self.rem_function_block, vbox_1)
+        self.add_fb_button = self.add_toggle_button("Add Function Block", self.add_function_block, vbox_1)
+        self.rm_fb_button = self.add_toggle_button("Remove Function Block", self.rem_function_block, vbox_1)
+        self.cn_fb_button = self.add_toggle_button("Connect Events", self.connect_events, vbox_1)
+
 
         listbox.add(row)
 
@@ -62,6 +64,17 @@ class FBE_ListBox(Gtk.Box):
 
         self.add_fb_listbox.connect("row-activated", self.on_row_activated)
 
+        self.edit_fb_listbox = Gtk.ListBox()
+        row = Gtk.ListBoxRow()
+        hbox_2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        label = Gtk.Label(label="EVENTS:", xalign=0)
+        row.add(hbox_2)
+        hbox_2.pack_start(label, True, True, 0)
+        label = Gtk.Label(label="	IN_EVENTS:", xalign=0)
+        hbox_2.pack_start(label, True, True, 0)
+
+        self.edit_fb_listbox.add(row)
+        self.pack_start(self.edit_fb_listbox, True, True , 0)
 
     def add_button(self, label, function, box):
         button = Gtk.Button.new_with_label(label)
@@ -70,8 +83,9 @@ class FBE_ListBox(Gtk.Box):
 
     def add_toggle_button(self, label, function, box):
         button = Gtk.ToggleButton.new_with_label(label)
-        button.connect("toggled", self.add_function_block)
+        button.connect("toggled", function)
         box.pack_start(button, False, False, 0)
+        return button
 
     def add_combo_box_item(self, combo, pos, _id, label):
         combo.insert(pos, _id, label)
@@ -81,12 +95,25 @@ class FBE_ListBox(Gtk.Box):
         if self.add_fb_listbox in self.get_children():
             self.remove(self.add_fb_listbox)
             self.fb_editor.enable_add = False
+            self.pack_start(self.edit_fb_listbox, True, True, 0)
         else:
+            self.remove(self.edit_fb_listbox)
+            self.rm_fb_button.set_active(False)
             self.pack_start(self.add_fb_listbox, True, True, 0)
             self.fb_editor.enable_add = True
 
     def rem_function_block(self, button):
-        print(button)
+        if self.fb_editor.enable_remove:
+            self.fb_editor.enable_remove = False
+        else:
+            self.fb_editor.enable_remove = True
+            self.add_fb_button.set_active(False)
+
+    def connect_events(self, button):
+        if self.fb_editor.enable_connect:
+            self.fb_editor.enable_connect = False
+        else:
+            self.fb_editor.enable_connect = True
 
     def on_row_activated(self, listbox_widget, row):
         print(row.data)
@@ -107,3 +134,8 @@ class FBE_ListBox(Gtk.Box):
         for item in selected_type:
             self.add_fb_listbox.add(ListBoxRowWithData(item))
         self.add_fb_listbox.show_all()
+
+    def create_edit_fb_listbox(self, listbox, fb):
+        pass
+
+

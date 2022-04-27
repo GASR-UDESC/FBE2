@@ -3,10 +3,11 @@
 import time
 
 class Base_Function_Block():
-    def __init__(self, name, **kwargs):
+    def __init__(self, name="NEW_FB", **kwargs):
         self.events = dict()
         self.variables = dict() 
         self.name = name
+        self.selected = False
         self.pos = [0,0]
 
     def get_event_output(self, event):
@@ -36,7 +37,7 @@ class Base_Function_Block():
         return self.variables[name]
 
     def change_pos(self, pos_x, pos_y):
-        pos[0],pos[1] = pos_x, pos_y
+        self.pos[0],self.pos[1] = pos_x, pos_y
 
     def run(self):
         for event in self.events.values():
@@ -51,6 +52,8 @@ class Event():
         self.active = active
         self.connections = set()
         self.in_event = in_event
+        self.selected = False
+        self.event_pos = [0,0]
 
     def activate(self, active=False):
         self.active = active
@@ -62,8 +65,6 @@ class Event():
     def add_connection(self, in_event):
         self.connections.add(in_event)
 
-    # Maybe we should add an algorithm variable. Need to talk to someone abt it.
-
 
 
 class Variable():
@@ -72,6 +73,8 @@ class Variable():
         self.block = block
         self.connections = set()
         self.in_var = in_var
+        self.selected = False
+        self.var_pos = [0,0]
 
     def set_value(self, value=None):
         self.value = value

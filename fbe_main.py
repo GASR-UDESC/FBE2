@@ -5,8 +5,8 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from gi.repository import Gio
 import sys
-from fb_editor import Function_Block_Editor
-from fbe_listbox import FBE_ListBox
+from gui.fb_editor import Function_Block_Editor
+from gui.fbe_listbox import FBE_ListBox
 
 
 class Window(Gtk.ApplicationWindow):

@@ -53,7 +53,7 @@ class Event():
         self.connections = set()
         self.in_event = in_event
         self.selected = False
-        self.event_pos = [0,0]
+        self.pos = [0,0]
 
     def activate(self, active=False):
         self.active = active
@@ -74,7 +74,7 @@ class Variable():
         self.connections = set()
         self.in_var = in_var
         self.selected = False
-        self.var_pos = [0,0]
+        self.pos = [0,0]
 
     def set_value(self, value=None):
         self.value = value
@@ -370,6 +370,15 @@ class world():
         self.add_function_block(getattr(self, fb_id))
 
     def remove_function_block(self, function_block):
+        for fb in self.function_blocks:
+            for event in fb.events.values():
+                for connection in event.connections.copy():
+                    if connection in function_block.events.values():
+                        event.connections.remove(connection)
+            for var in fb.variables.values():
+                for connection in var.connections.copy():
+                    if connection in function_block.variables.values():
+                        var.connections.remove(connection)
         self.function_blocks.discard(function_block)
 
     def create_graph(self):
@@ -395,10 +404,34 @@ class world():
                 self.read_through(in_event.block, path)
 
     def connect_events(self, in_event, out_event):
-        out_event.add_connection(in_event)
+        if type(in_event) is not Event or type(out_event) is not Event:
+            pass
+        else:
+            if (in_event.in_event and out_event.in_event) or (in_event.in_event != True and out_event.in_event != True):
+                pass
+            else:
+                if in_event.in_event:
+                    _in_event = in_event
+                    _out_event = out_event
+                else:
+                    _in_event = out_event
+                    _out_event = in_event
+                _out_event.add_connection(_in_event)
 
     def connect_variables(self, in_var, out_var):
-        out_var.add_connection(in_var)
+        if type(in_var) is not Variable or type(out_var) is not Variable:
+            pass
+        else:
+            if (in_var.in_var and out_var.in_var) or (in_var.in_var != True and out_var.in_var != True):
+                pass
+            else:		
+                if in_var.in_var:
+                    _in_var = in_var
+                    _out_var = out_var
+                else:
+                    _in_var = out_var
+                    _out_var = in_var
+                _out_var.add_connection(_in_var)
 
     def function_block_states(self):
         for fb in self.function_blocks:

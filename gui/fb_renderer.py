@@ -33,27 +33,16 @@ class Function_Block_Renderer(Gtk.DrawingArea):
 
         cr.move_to(i_pos_x, i_pos_y)
         cr.line_to(i_pos_x, i_pos_y + t_vert_length)
-        cr.move_to(i_pos_x, i_pos_y + t_vert_length)
         cr.line_to(i_pos_x + b_neck_width, i_pos_y + t_vert_length)
-        cr.move_to(i_pos_x + b_neck_width, i_pos_y + t_vert_length)
         cr.line_to(i_pos_x + b_neck_width, i_pos_y + t_vert_length + b_neck_height)
-        cr.move_to(i_pos_x + b_neck_width, i_pos_y + t_vert_length + b_neck_height)
         cr.line_to(i_pos_x, i_pos_y + t_vert_length + b_neck_height)
-        cr.move_to(i_pos_x, i_pos_y + t_vert_length + b_neck_height)
         cr.line_to(i_pos_x, i_pos_y + t_vert_length + b_neck_height + b_vert_length)
-        cr.move_to(i_pos_x, i_pos_y + t_vert_length + b_neck_height + b_vert_length)
         cr.line_to(i_pos_x + h_length, i_pos_y + t_vert_length + b_neck_height + b_vert_length) 
-        cr.move_to(i_pos_x + h_length, i_pos_y + t_vert_length + b_neck_height + b_vert_length)
         cr.line_to(i_pos_x + h_length, i_pos_y + t_vert_length + b_neck_height)
-        cr.move_to(i_pos_x + h_length, i_pos_y + t_vert_length + b_neck_height)
         cr.line_to(i_pos_x + h_length - b_neck_width, i_pos_y + t_vert_length + b_neck_height)
-        cr.move_to(i_pos_x + h_length - b_neck_width, i_pos_y + t_vert_length + b_neck_height)
         cr.line_to(i_pos_x + h_length - b_neck_width, i_pos_y + t_vert_length)
-        cr.move_to(i_pos_x + h_length - b_neck_width, i_pos_y + t_vert_length)
         cr.line_to(i_pos_x + h_length, i_pos_y + t_vert_length)
-        cr.move_to(i_pos_x + h_length, i_pos_y + t_vert_length)
         cr.line_to(i_pos_x + h_length, i_pos_y)
-        cr.move_to(i_pos_x + h_length, i_pos_y)
         cr.line_to(i_pos_x, i_pos_y)
         cr.stroke()
 
@@ -63,25 +52,79 @@ class Function_Block_Renderer(Gtk.DrawingArea):
         j=0
         for event in fb.events.keys():
             if fb.events[event].in_event:
-                self.write_txt(wid, cr, event, i_pos_x, 12 + i_pos_y + i*gain)
-                fb.events[event].event_pos = [i_pos_x, 12 + i_pos_y + i*gain]
+                self.write_txt(wid, cr, event, i_pos_x, 12 + i_pos_y + i*gain, selected=fb.events[event].selected)
+                fb.events[event].pos = [i_pos_x, 12 + i_pos_y + i*gain]
                 i = i+1 
             else:
-                self.write_txt(wid, cr, event, i_pos_x + h_length - 7*len(event), 12 + i_pos_y + j*gain)
-                fb.events[event].event_pos = [i_pos_x + h_length - 7*len(event), 12 + i_pos_y + j*gain]
+                self.write_txt(wid, cr, event, i_pos_x + h_length - 7*len(event), 12 + i_pos_y + j*gain, selected=fb.events[event].selected)
+                fb.events[event].pos = [i_pos_x + h_length - 7*len(event), 12 + i_pos_y + j*gain]
                 j = j+1
 
         i=0
         j=0
         for var in fb.variables.keys():
             if fb.variables[var].in_var:
-                self.write_txt(wid, cr, var, i_pos_x, 12 + i_pos_y + i*gain + t_vert_length + b_neck_height + gain)
-                fb.variables[var].var_pos = [i_pos_x, 12 + i_pos_y + i*gain + t_vert_length + b_neck_height + gain]
+                self.write_txt(wid, cr, var, i_pos_x, 12 + i_pos_y + i*gain + t_vert_length + b_neck_height + gain, selected=fb.variables[var].selected)
+                fb.variables[var].pos = [i_pos_x, 12 + i_pos_y + i*gain + t_vert_length + b_neck_height + gain]
                 i = i+1 
             else:
-                self.write_txt(wid, cr, var, i_pos_x + h_length - 7*len(var), 12 + i_pos_y + j*gain + t_vert_length + b_neck_height + gain)
-                fb.variables[var].var_pos = [i_pos_x + h_length - 7*len(var), 12 + i_pos_y + j*gain + t_vert_length + b_neck_height + gain]
+                self.write_txt(wid, cr, var, i_pos_x + h_length - 7*len(var), 12 + i_pos_y + j*gain + t_vert_length + b_neck_height + gain, selected=fb.variables[var].selected)
+                fb.variables[var].pos = [i_pos_x + h_length - 7*len(var), 12 + i_pos_y + j*gain + t_vert_length + b_neck_height + gain]
                 j = j+1
+
+    def draw_connections(self, wid, cr, gain=20, selected=0):
+        cr.set_source_rgb(selected, 0, 0)
+        i = 0
+        for fb in self.fb_diagram.function_blocks:
+            for var in fb.variables.items():
+                for connection in var[1].connections:
+                    h_length, t_vert_length, b_vert_length = self.get_fb_measurements(var[1].block, gain=20)
+                    if var[1].pos[0] > connection.pos[0]:
+                        i = i + 1
+                        cr.move_to(var[1].block.pos[0] + h_length, var[1].pos[1])
+                        cr.line_to(len(var[0])*7 + var[1].block.pos[0] + h_length, var[1].pos[1])
+                        if var[1].pos[1] < connection.pos[1]:
+                            h_length, t_vert_length, b_vert_length = self.get_fb_measurements(connection.block, gain=20)
+                            cr.line_to(len(var[0])*7 + var[1].block.pos[0] + h_length, connection.block.pos[1] + t_vert_length + b_vert_length + t_vert_length/2 + gain/(i))
+                            cr.line_to(connection.block.pos[0] - len(var[0])*7, connection.block.pos[1] + t_vert_length + b_vert_length + t_vert_length/2 + gain/(i))
+                        else:
+                            cr.line_to(len(var[0])*7 + var[1].block.pos[0] + h_length, var[1].block.pos[1] + t_vert_length + b_vert_length + t_vert_length/2 + gain/(i))
+                            cr.line_to(connection.block.pos[0] - len(var[0])*7, var[1].block.pos[1] + t_vert_length + b_vert_length + t_vert_length/2 + gain/(i))
+
+                        cr.line_to(connection.block.pos[0] - len(var[0])*7, connection.pos[1])
+                        cr.line_to(connection.pos[0], connection.pos[1])
+
+                    else:
+                        cr.move_to(var[1].block.pos[0] + h_length, var[1].pos[1])
+                        cr.line_to((connection.block.pos[0] - var[1].block.pos[0] - h_length)/2 + var[1].block.pos[0] + h_length, var[1].pos[1])
+                        cr.line_to((connection.block.pos[0]- var[1].block.pos[0] - h_length)/2 + var[1].block.pos[0] + h_length, connection.pos[1])
+                        cr.line_to(connection.block.pos[0], connection.pos[1])
+                cr.stroke()
+            i = 0
+            for event in fb.events.items():
+                for connection in event[1].connections:
+                    h_length, _, _ = self.get_fb_measurements(event[1].block, gain=20)
+                    if event[1].pos[0] > connection.pos[0]:
+                        i = i + 1
+                        cr.move_to(event[1].block.pos[0] + h_length, event[1].pos[1])
+                        cr.line_to(len(event[0])*7 + event[1].block.pos[0] + h_length, event[1].pos[1])
+                        if event[1].pos[1] < connection.pos[1]:
+                            cr.line_to(len(event[0])*7 + event[1].block.pos[0] + h_length, event[1].block.pos[1] - gain/i)
+                            cr.line_to(connection.block.pos[0] - len(event[0])*7, event[1].block.pos[1] -gain/i)
+                        else:
+                            cr.line_to(len(event[0])*7 + event[1].block.pos[0] + h_length, connection.block.pos[1] - gain/i)
+                            cr.line_to(connection.block.pos[0] - len(event[0])*7, connection.block.pos[1] -gain/i)
+
+                        cr.line_to(connection.block.pos[0] - len(event[0])*7, connection.pos[1])
+                        cr.line_to(connection.pos[0], connection.pos[1])
+
+                    else:
+                        cr.move_to(event[1].block.pos[0] + h_length, event[1].pos[1])
+                        cr.line_to((connection.block.pos[0] - event[1].block.pos[0] - h_length)/2 + event[1].block.pos[0] + h_length, event[1].pos[1])
+                        cr.line_to((connection.block.pos[0]- event[1].block.pos[0] - h_length)/2 + event[1].block.pos[0] + h_length, connection.pos[1])
+                        cr.line_to(connection.block.pos[0], connection.pos[1])
+                cr.stroke()
+
 
     def write_txt(self, wid, cr, name, i_pos_x, i_pos_y, selected=0):
         cr.set_source_rgb(selected, 0, 0)
@@ -90,12 +133,12 @@ class Function_Block_Renderer(Gtk.DrawingArea):
         cr.move_to(i_pos_x, i_pos_y)
         cr.show_text(name)
 
-    def detect_fb(self, fb_diagram, x, y):
+    def detect_fb(self, x, y):
         selected_fb = None
         selected_event = None
         selected_var = None
 
-        for fb in fb_diagram.function_blocks:
+        for fb in self.fb_diagram.function_blocks:
             h_length, t_vert_length, b_vert_length = self.get_fb_measurements(fb, gain=20)
             b_neck_height = t_vert_length/2
             if (x - h_length) <= fb.pos[0] and (y - t_vert_length - b_neck_height - b_vert_length) <= fb.pos[1] and x >= fb.pos[0] and y >= fb.pos[1]:
@@ -108,33 +151,46 @@ class Function_Block_Renderer(Gtk.DrawingArea):
             for event in selected_fb.events.items():
                 obj_length = 7*len(event[0])
                 obj_height = 12
-                print(obj_length, obj_height)
-                if (x-obj_length) <= event[1].event_pos[0] and (y+obj_height) >= event[1].event_pos[1] and x >= event[1].event_pos[0] and y <= event[1].event_pos[1]:
+                if (x-obj_length) <= event[1].pos[0] and (y+obj_height) >= event[1].pos[1] and x >= event[1].pos[0] and y <= event[1].pos[1]:
                     selected_event = event[1]
-                    event[1].selected = True
+                    event[1].selected = 1
                 else:
-                    event[1].selected = False
+                    event[1].selected = 0
 
             if selected_event == None:
                 for var in selected_fb.variables.items():
                     obj_length = 7*len(var[0])
                     obj_height = 12
-                    print(obj_length, obj_height)
-                    if (x-obj_length) <= var[1].var_pos[0] and (y+obj_height) >= var[1].var_pos[1] and x >= var[1].var_pos[0] and y <= var[1].var_pos[1]:
+                    if (x-obj_length) <= var[1].pos[0] and (y+obj_height) >= var[1].pos[1] and x >= var[1].pos[0] and y <= var[1].pos[1]:
                         selected_var = var[1]
-                        var[1].selected = True
+                        var[1].selected = 1
                     else:
-                        var[1].selected = False
-        # ~ if selected_fb is not None:
-            # ~ for event in selected_fb.events.values():
-                # ~ print(event.event_pos)
-            # ~ for var in selected_fb.variables.values():
-                # ~ print(var.var_pos)
-            # ~ print(x, y)
+                        var[1].selected = 0
+
 
         return selected_fb, selected_event, selected_var
 
-
+    def detect_connection(self, x, y, z=7):
+        selected_cn = None
+        for fb in self.fb_diagram.function_blocks:
+            for event in fb.events.items():
+                for connection in event[1].connections:
+                    h_length,_,_ = self.get_fb_measurements(event[1].block, gain=20)
+                    mid = (connection.pos[0] - event[1].block.pos[0] - h_length)/2 + event[1].block.pos[0] + h_length
+                    if x<mid and x>event[1].pos[0]:
+                        if  y<(event[1].pos[1] + z) and y>(event[1].pos[1]-z):
+                            selected_cn = (event[1], connection)
+                    elif x<(mid+z) and x>(mid-z):
+                        if event[1].pos[1] < connection.pos[1]:
+                            if y>=event[1].pos[1] and y<=connection.pos[1]:
+                                selected_cn = (event[1], connection)
+                        else:
+                            if y<=event[1].pos[1] and y>=connection.pos[1]:
+                                selected_cn = (event[1], connection)
+                    elif x>mid and x<connection.pos[0]:
+                        if y>=event[1].pos[1] and y<=connection.pos[1]:
+                            selected_cn = (event[1], connection)
+        return selected_cn
 
     def get_fb_measurements(self, fb, gain):
         in_events = list()

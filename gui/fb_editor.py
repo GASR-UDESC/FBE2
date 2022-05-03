@@ -48,6 +48,7 @@ class Function_Block_Editor(Gtk.Box):
         # ~ self.draw_line_conections(wid, cr)   
         for fb in self.fb_diagram.function_blocks:
             self.function_block_renderer.draw_function_block(wid, cr, fb, gain=20)
+        self.function_block_renderer.draw_connections(wid, cr)
 
     def on_button_press(self, w, e):
 
@@ -58,23 +59,35 @@ class Function_Block_Editor(Gtk.Box):
                         getattr(self.fb_diagram, "fb" + str(len(self.fb_diagram.function_blocks)-1)).pos = [e.x, e.y]  
 
                     else:
-                        self.selected_fb, selected_event, selected_var  = self.function_block_renderer.detect_fb(self.fb_diagram, e.x, e.y)
-                        print(self.function_block_renderer.detect_fb(self.fb_diagram, e.x, e.y))
+                        self.selected_fb, selected_event, selected_var  = self.function_block_renderer.detect_fb(e.x, e.y)
+                        print(self.function_block_renderer.detect_connection(e.x, e.y))
+                        print(self.function_block_renderer.detect_fb(e.x, e.y))
                         self.ref_pos = [e.x, e.y]
                         if self.enable_remove:
                             self.fb_diagram.remove_function_block(self.selected_fb)
                         elif self.enable_connect:
                             if self.previous_selected == None:
-                                try:	
-                                    self.previous_selected = selected_event
-                                except:
+                                if selected_event == None:
                                     self.previous_selected = selected_var
+                                else:
+                                    self.previous_selected = selected_event
                             else:
-                                try:
+                                if selected_event is not None:
                                     self.fb_diagram.connect_events(self.previous_selected, selected_event)
-                                except:
+                                    self.previous_selected = None
+                                else:
                                     self.fb_diagram.connect_variables(self.previous_selected, selected_var)
                                     self.previous_selected = None
+
+                            # ~ for fb in self.fb_diagram.function_blocks:
+                                # ~ for event in fb.events.values():
+                                    # ~ print(event.connections)
+
+                            # ~ for fb in self.fb_diagram.function_blocks:
+                                # ~ for var in fb.variables.values():
+                                    # ~ print(var.connections)
+
+
                     self.function_block_renderer.queue_draw()
         if e.type == Gdk.EventType.BUTTON_RELEASE:
             if self.selected_fb is not None and not self.enable_add:

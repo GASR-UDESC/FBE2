@@ -99,6 +99,7 @@ class FBE_ListBox(Gtk.Box):
         else:
             self.remove(self.edit_fb_listbox)
             self.rm_fb_button.set_active(False)
+            self.cn_fb_button.set_active(False)
             self.pack_start(self.add_fb_listbox, True, True, 0)
             self.fb_editor.enable_add = True
 
@@ -108,12 +109,15 @@ class FBE_ListBox(Gtk.Box):
         else:
             self.fb_editor.enable_remove = True
             self.add_fb_button.set_active(False)
+            self.cn_fb_button.set_active(False)
 
     def connect_events(self, button):
         if self.fb_editor.enable_connect:
             self.fb_editor.enable_connect = False
         else:
             self.fb_editor.enable_connect = True
+            self.add_fb_button.set_active(False)
+            self.rm_fb_button.set_active(False)
 
     def on_row_activated(self, listbox_widget, row):
         print(row.data)

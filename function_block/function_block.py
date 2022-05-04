@@ -53,6 +53,7 @@ class Event():
         self.connections = set()
         self.in_event = in_event
         self.selected = False
+        self.selected_cn = False
         self.pos = [0,0]
 
     def activate(self, active=False):
@@ -74,6 +75,7 @@ class Variable():
         self.connections = set()
         self.in_var = in_var
         self.selected = False
+        self.selected_cn = False
         self.pos = [0,0]
 
     def set_value(self, value=None):

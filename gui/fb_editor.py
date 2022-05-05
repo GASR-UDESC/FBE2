@@ -63,6 +63,7 @@ class Function_Block_Editor(Gtk.Box):
                         self.function_block_renderer.detect_connection(e.x, e.y)
                         self.function_block_renderer.detect_fb(e.x, e.y)
                         self.ref_pos = [e.x, e.y]
+                        print(self.ref_pos)
                         if self.enable_remove:
                             self.fb_diagram.remove_function_block(self.selected_fb)
                         elif self.enable_connect:

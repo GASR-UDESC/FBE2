@@ -10,7 +10,28 @@ class ListBoxRowWithData(Gtk.ListBoxRow):
         self.data = data
         self.add(Gtk.Label(label=data))
 
-
+class EditFbCellRenderer(Gtk.Box):
+	def __init__(self, fb):
+		super().__init__(*args, **kwargs)
+		self.liststore = Gtk.ListStore(str, str)
+		treeview =Gtk.TreeView(model=self.liststore)
+		
+		renderer_text = Gtk.CellRendererText()
+		column_text = Gtk.TreeViewColumn("Type", renderer_text, text=0)
+		treeview.append_column(column_text)
+		
+		renderer_editabletext = Gtk.CellRendererText()
+		renderer_editabletext.set_property("editable", True)
+		
+		column_editabletext = Gtk.TreeViewColumn("", renderer_editabletext, text=1)
+		treeview.append_column(column_editabletext)
+		
+		renderer_editabletext.connect("edited", self.text_edited)
+		
+		self.add(treeview)
+	def text_edited(self, widget, path, text):
+		self.liststore[path][1] = text	
+	
 class FBE_ListBox(Gtk.Box):
     def __init__(self, fb_editor):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=1)

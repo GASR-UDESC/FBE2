@@ -13,6 +13,7 @@ class Function_Block_Renderer(Gtk.DrawingArea):
     def __init__(self, fb_diagram=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fb_diagram = fb_diagram
+        self.selected_cn = None
 
     def draw_function_block(self, wid, cr, fb, gain):
         cr.set_source_rgb(0, 0, 0)
@@ -28,7 +29,6 @@ class Function_Block_Renderer(Gtk.DrawingArea):
         h_length, t_vert_length, b_vert_length = self.get_fb_measurements(fb, gain)
         b_neck_width = h_length/6
         b_neck_height = t_vert_length/2
-        #print(h_length, t_vert_length, b_vert_length)
 
 
         cr.move_to(i_pos_x, i_pos_y)
@@ -78,10 +78,12 @@ class Function_Block_Renderer(Gtk.DrawingArea):
         for fb in self.fb_diagram.function_blocks:
             for var in fb.variables.items():
                 for connection in var[1].connections:
-                    if var[1].selected_cn and connection.selected_cn:
+                    if self.selected_cn == (var[1], connection):
                         cr.set_source_rgb(1,0,0)
+                        print("coloriu", var[1], "  ", connection)
                     else:
                         cr.set_source_rgb(0,0,0)
+                        print("descoloriu", var[1], "  ", connection)
                     h_length, t_vert_length, b_vert_length = self.get_fb_measurements(var[1].block, gain=20)
                     if var[1].pos[0] > connection.pos[0]:
 
@@ -103,11 +105,11 @@ class Function_Block_Renderer(Gtk.DrawingArea):
                         cr.line_to((connection.block.pos[0] - var[1].block.pos[0] - h_length)/2 + var[1].block.pos[0] + h_length, var[1].pos[1])
                         cr.line_to((connection.block.pos[0]- var[1].block.pos[0] - h_length)/2 + var[1].block.pos[0] + h_length, connection.pos[1])
                         cr.line_to(connection.block.pos[0], connection.pos[1])
-                cr.stroke()
+                    cr.stroke()
 
             for event in fb.events.items():
                 for connection in event[1].connections:
-                    if event[1].selected_cn and connection.selected_cn:
+                    if self.selected_cn == (event[1], connection):
                         cr.set_source_rgb(1,0,0)
                     else:
                         cr.set_source_rgb(0,0,0)
@@ -130,7 +132,7 @@ class Function_Block_Renderer(Gtk.DrawingArea):
                         cr.line_to((connection.block.pos[0] - event[1].block.pos[0] - h_length)/2 + event[1].block.pos[0] + h_length, event[1].pos[1])
                         cr.line_to((connection.block.pos[0]- event[1].block.pos[0] - h_length)/2 + event[1].block.pos[0] + h_length, connection.pos[1])
                         cr.line_to(connection.block.pos[0], connection.pos[1])
-                cr.stroke()
+                    cr.stroke()
 
 
     def write_txt(self, wid, cr, name, i_pos_x, i_pos_y, selected=0):
@@ -178,7 +180,7 @@ class Function_Block_Renderer(Gtk.DrawingArea):
         return selected_fb, selected_event, selected_var
 
     def detect_connection(self, x, y, z=7, gain=20):
-        selected_cn = None
+        self.selected_cn = None
         for fb in self.fb_diagram.function_blocks:
             for event in fb.events.items():
                 event[1].selected_cn = False
@@ -186,101 +188,91 @@ class Function_Block_Renderer(Gtk.DrawingArea):
                     connection.selected_cn = False
 
         for fb in self.fb_diagram.function_blocks:
+            if self.selected_cn != None:
+                break
             for event in fb.events.items():
                 for connection in event[1].connections:
                     h_length,_,_ = self.get_fb_measurements(event[1].block, gain=20)
                     mid = (connection.pos[0] - event[1].block.pos[0] - h_length)/2 + event[1].block.pos[0] + h_length
                     if connection.pos[0] > event[1].pos[0]:
-                        if x<mid and x>event[1].pos[0]:
+                        if x<mid and x>(event[1].block.pos[0]+h_length):
                             if  y<(event[1].pos[1] + z) and y>(event[1].pos[1]-z):
-                                selected_cn = (event[1], connection)
+                                self.selected_cn = (event[1], connection)
                                 event[1].selected_cn = True
                                 connection.selected_cn = True
                         if x<(mid+z) and x>(mid-z):
                             if event[1].pos[1] < connection.pos[1]:
                                 if y>=event[1].pos[1] and y<=connection.pos[1]:
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
                             else:
                                 if y<=event[1].pos[1] and y>=connection.pos[1]:
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
                         elif x>mid and x<connection.pos[0]:
                             if y>=connection.pos[1] - z and y<=connection.pos[1] + z:
-                                selected_cn = (event[1], connection)
+                                self.selected_cn = (event[1], connection)
                                 event[1].selected_cn = True
                                 connection.selected_cn = True
                     else:
                         if connection.pos[1] < event[1].pos[1]:
-                            # ~ print("iran")
-                            # ~ print(event[1].pos[0], "  ", (14*len(event[0])+event[1].pos[0]))
                             if x > event[1].pos[0] and x < (14*len(event[0])+event[1].pos[0]):
-                                # ~ print("passed")
                                 if y > (event[1].pos[1] - z) and y < (event[1].pos[1] + z):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                             if x > (event[1].pos[0] + 14*len(event[0]) - z) and x < (event[1].pos[0] + 14*len(event[0]) + z):
                                 if y < event[1].pos[1] and y > (connection.block.pos[1] - gain):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                             if y > (connection.block.pos[1] - gain - z) and y < (connection.block.pos[1] - gain + z):
                                 if x < (event[1].pos[0] + 14*len(event[0])) and x > (connection.pos[0] - 14*len(event[0])):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                             if y > (connection.block.pos[1] - gain) and y < (connection.pos[1]):
-                                # ~ print("passed")
                                 if x < (connection.pos[0] - 7*len(event[0]) + z) and x > (connection.pos[0] - 7*len(event[0]) - z):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                             if y > (connection.pos[1] - z) and y < (connection.pos[1] + z):
                                 if x > (connection.pos[0] - 7*len(event[0])) and x < (connection.pos[0]):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
-                            print(selected_cn)
+                                    self.selected_cn = (event[1], connection)
                         else:
-                            # ~ print("iran")
-                            # ~ print(event[1].pos[0], "  ", (14*len(event[0])+event[1].pos[0]))
                             if x > event[1].pos[0] and x < (14*len(event[0])+event[1].pos[0]):
-                                # ~ print("passed")
                                 if y > (event[1].pos[1] - z) and y < (event[1].pos[1] + z):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                             if x > (event[1].pos[0] + 14*len(event[0]) - z) and x < (event[1].pos[0] + 14*len(event[0]) + z):
                                 if y < event[1].pos[1] and y > (event[1].block.pos[1] - gain):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                             if y > (event[1].block.pos[1] - gain - z) and y < (event[1].block.pos[1] - gain + z):
                                 if x < (event[1].pos[0] + 14*len(event[0])) and x > (connection.pos[0] - 14*len(event[0])):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                             if y > (event[1].block.pos[1] - gain) and y < (connection.pos[1]):
-                                # ~ print("passed")
                                 if x < (connection.pos[0] - 7*len(event[0]) + z) and x > (connection.pos[0] - 7*len(event[0]) - z):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
+                                    self.selected_cn = (event[1], connection)
                             if y > (connection.pos[1] - z) and y < (connection.pos[1] + z):
                                 if x > (connection.pos[0] - 7*len(event[0])) and x < (connection.pos[0]):
                                     event[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (event[1], connection)
-                    print(selected_cn)
+                                    selfselected_cn = (event[1], connection)
 
-                    # ~ if selected_cn == None:
-                        # ~ event[1].selected_cn = False
-                        # ~ connection.selected_cn = False
-        selected_cn = None
-        for fb in self.fb_diagram.function_blocks:
+                    
+            if self.selected_cn != None:
+                break
             for var in fb.variables.items():
                 var[1].selected_cn = False
                 for connection in var[1].connections:
@@ -288,97 +280,83 @@ class Function_Block_Renderer(Gtk.DrawingArea):
                     h_length,_,_ = self.get_fb_measurements(var[1].block, gain=20)
                     mid = (connection.pos[0] - var[1].block.pos[0] - h_length)/2 + var[1].block.pos[0] + h_length
                     if connection.pos[0] > var[1].pos[0]:
-                        if x<mid and x>var[1].pos[0]:
+                        if x<mid and x>(var[1].block.pos[0]+h_length):
                             if  y<(var[1].pos[1] + z) and y>(var[1].pos[1]-z):
-                                selected_cn = (var[1], connection)
+                                self.selected_cn = (var[1], connection)
                                 var[1].selected_cn = True
                                 connection.selected_cn = True
                         if x<(mid+z) and x>(mid-z):
                             if var[1].pos[1] < connection.pos[1]:
                                 if y>=var[1].pos[1] and y<=connection.pos[1]:
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
                             else:
                                 if y<=var[1].pos[1] and y>=connection.pos[1]:
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                        elif x>mid and x<connection.pos[0]:
+                        if x>mid and x<connection.pos[0]:
                             if y>=connection.pos[1] - z and y<=connection.pos[1] + z:
-                                selected_cn = (var[1], connection)
+                                self.selected_cn = (var[1], connection)
                                 var[1].selected_cn = True
                                 connection.selected_cn = True
                     else:
                         if connection.pos[1] > var[1].pos[1]:
-                            # ~ print("iran")
-                            # ~ print(var[1].pos[0], "  ", (14*len(var[0])+var[1].pos[0]))
-                            _,t_vert_length, b_vert_length = self.get_fb_measurements(connection.block, gain)
                             h = b_vert_length + 3/2*t_vert_length
                             if x > var[1].pos[0] and x < (14*len(var[0])+var[1].pos[0]):
-                                # ~ print("passed")
                                 if y > (var[1].pos[1] - z) and y < (var[1].pos[1] + z):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                             if x > (var[1].pos[0] + 14*len(var[0]) - z) and x < (var[1].pos[0] + 14*len(var[0]) + z):
                                 if y > var[1].pos[1] and y < (connection.block.pos[1] + h  + gain):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                             if y > (connection.block.pos[1] + h + gain - z) and y < (connection.block.pos[1] +h + gain + z):
                                 if x < (var[1].pos[0] + 14*len(var[0])) and x > (connection.pos[0] - 14*len(var[0])):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                             if y < (connection.block.pos[1] + h + gain) and y > (connection.pos[1]):
-                                # ~ print("passed")
                                 if x < (connection.pos[0] - 7*len(var[0]) + z) and x > (connection.pos[0] - 7*len(var[0]) - z):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                             if y > (connection.pos[1] - z) and y < (connection.pos[1] + z):
                                 if x > (connection.pos[0] - 7*len(var[0])) and x < (connection.pos[0]):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                         else:
-                            # ~ print("iran")
-                            # ~ print(var[1].pos[0], "  ", (14*len(var[0])+var[1].pos[0]))
                             _,t_vert_length, b_vert_length = self.get_fb_measurements(var[1].block, gain)
                             h = b_vert_length + 3/2*t_vert_length
                             if x > var[1].pos[0] and x < (14*len(var[0])+var[1].pos[0]):
-                                # ~ print("passed")
                                 if y > (var[1].pos[1] - z) and y < (var[1].pos[1] + z):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                             if x > (var[1].pos[0] + 14*len(var[0]) - z) and x < (var[1].pos[0] + 14*len(var[0]) + z):
                                 if y > var[1].pos[1] and y < (var[1].block.pos[1] + h + gain):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                             if y > (var[1].block.pos[1] +h + gain - z) and y < (var[1].block.pos[1] + h + gain + z):
                                 if x < (var[1].pos[0] + 14*len(var[0])) and x > (connection.pos[0] - 14*len(var[0])):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                             if y < (var[1].block.pos[1] + h + gain) and y > (connection.pos[1]):
-                                # ~ print("passed")
                                 if x < (connection.pos[0] - 7*len(var[0]) + z) and x > (connection.pos[0] - 7*len(var[0]) - z):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
+                                    self.selected_cn = (var[1], connection)
                             if y > (connection.pos[1] - z) and y < (connection.pos[1] + z):
                                 if x > (connection.pos[0] - 7*len(var[0])) and x < (connection.pos[0]):
                                     var[1].selected_cn = True
                                     connection.selected_cn = True
-                                    selected_cn = (var[1], connection)
-                    print(selected_cn)
-
-                    # ~ if selected_cn == None:
-                        # ~ var[1].selected_cn = False
-                        # ~ connection.selected_cn = False
+                                    self.selected_cn = (var[1], connection)
 
 
     def get_fb_measurements(self, fb, gain):

@@ -434,7 +434,7 @@ class world():
                     _in_var = out_var
                     _out_var = in_var
                 _out_var.add_connection(_in_var)
-
+	
     def function_block_states(self):
         for fb in self.function_blocks:
             for event in fb.events.items():

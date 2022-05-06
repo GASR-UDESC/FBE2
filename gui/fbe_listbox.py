@@ -17,10 +17,6 @@ class FBE_ListBox(Gtk.Box):
 
         self.fb_editor = fb_editor
 
-        event_driven = ["PERMIT", "E_CTU", "E_MERGE"]
-        service_interface = ["IO_WRITER", "IO_READER", "PID_SIMPLE"]
-
-
         listbox = Gtk.ListBox()
         listbox.set_selection_mode(Gtk.SelectionMode.NONE)
         self.pack_start(listbox, True, True, 0)
@@ -32,7 +28,7 @@ class FBE_ListBox(Gtk.Box):
         hbox.pack_start(vbox_1, True, True, 0)
 
         self.add_fb_button = self.add_toggle_button("Add Function Block", self.add_function_block, vbox_1)
-        self.rm_fb_button = self.add_toggle_button("Remove Function Block", self.rem_function_block, vbox_1)
+        self.rm_fb_button = self.add_toggle_button("Delete", self.delete, vbox_1)
         self.cn_fb_button = self.add_toggle_button("Connect Events", self.connect_events, vbox_1)
 
 
@@ -103,7 +99,7 @@ class FBE_ListBox(Gtk.Box):
             self.pack_start(self.add_fb_listbox, True, True, 0)
             self.fb_editor.enable_add = True
 
-    def rem_function_block(self, button):
+    def delete(self, button):
         if self.fb_editor.enable_remove:
             self.fb_editor.enable_remove = False
         else:
@@ -125,7 +121,7 @@ class FBE_ListBox(Gtk.Box):
 
     def on_type_changed(self, combo):
         selected = combo.get_active_text()
-        event_driven = ["PERMIT", "E_CTU", "E_MERGE"]
+        event_driven = ["PERMIT", "E_CTU", "E_MERGE","E_RESTART", "E_CYCLE", "E_DELAY", "E_DEMUX"]
         service_interface = ["IO_WRITER", "IO_READER", "PID_SIMPLE"]
         selected_type = list()
         if selected == 'Event Driven':

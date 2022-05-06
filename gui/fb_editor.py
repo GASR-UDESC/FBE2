@@ -33,7 +33,6 @@ class Function_Block_Editor(Gtk.Box):
         self.frame_props = Gtk.Frame(label='Properties', visible=False, no_show_all=True)
         self.pack_start(self.paned, True, True, 0)
         self.paned.pack1(self.scrolled, True, False)
-        self.paned.pack2(self.sidebox, False, False)
         self.scrolled.add(self.function_block_renderer)
         self.function_block_renderer.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self.function_block_renderer.add_events(Gdk.EventMask.BUTTON_RELEASE_MASK)
@@ -45,7 +44,6 @@ class Function_Block_Editor(Gtk.Box):
         self.selected_fb = fb
 
     def on_draw(self, wid, cr):
-        # ~ self.draw_line_conections(wid, cr)   
         for fb in self.fb_diagram.function_blocks:
             self.function_block_renderer.draw_function_block(wid, cr, fb, gain=20)
         self.function_block_renderer.draw_connections(wid, cr)
@@ -63,9 +61,11 @@ class Function_Block_Editor(Gtk.Box):
                         self.function_block_renderer.detect_connection(e.x, e.y)
                         self.function_block_renderer.detect_fb(e.x, e.y)
                         self.ref_pos = [e.x, e.y]
-                        print(self.ref_pos)
                         if self.enable_remove:
-                            self.fb_diagram.remove_function_block(self.selected_fb)
+                            if self.selected_fb is not None:
+                                self.fb_diagram.remove_function_block(self.selected_fb)
+                            if self.function_block_renderer.selected_cn is not None:
+                                self.function_block_renderer.selected_cn[0].connections.remove(self.function_block_renderer.selected_cn[1])
                         elif self.enable_connect:
                             if self.previous_selected == None:
                                 if selected_event == None:
@@ -79,14 +79,6 @@ class Function_Block_Editor(Gtk.Box):
                                 else:
                                     self.fb_diagram.connect_variables(self.previous_selected, selected_var)
                                     self.previous_selected = None
-
-                            # ~ for fb in self.fb_diagram.function_blocks:
-                                # ~ for event in fb.events.values():
-                                    # ~ print(event.connections)
-
-                            # ~ for fb in self.fb_diagram.function_blocks:
-                                # ~ for var in fb.variables.values():
-                                    # ~ print(var.connections)
 
 
                     self.function_block_renderer.queue_draw()

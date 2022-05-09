@@ -4,34 +4,13 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
+
 class ListBoxRowWithData(Gtk.ListBoxRow):
     def __init__(self, data):
         super().__init__()
         self.data = data
         self.add(Gtk.Label(label=data))
 
-class EditFbCellRenderer(Gtk.Box):
-	def __init__(self, fb):
-		super().__init__(*args, **kwargs)
-		self.liststore = Gtk.ListStore(str, str)
-		treeview =Gtk.TreeView(model=self.liststore)
-		
-		renderer_text = Gtk.CellRendererText()
-		column_text = Gtk.TreeViewColumn("Type", renderer_text, text=0)
-		treeview.append_column(column_text)
-		
-		renderer_editabletext = Gtk.CellRendererText()
-		renderer_editabletext.set_property("editable", True)
-		
-		column_editabletext = Gtk.TreeViewColumn("", renderer_editabletext, text=1)
-		treeview.append_column(column_editabletext)
-		
-		renderer_editabletext.connect("edited", self.text_edited)
-		
-		self.add(treeview)
-	def text_edited(self, widget, path, text):
-		self.liststore[path][1] = text	
-	
 class FBE_ListBox(Gtk.Box):
     def __init__(self, fb_editor):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=1)
@@ -50,7 +29,7 @@ class FBE_ListBox(Gtk.Box):
 
         self.add_fb_button = self.add_toggle_button("Add Function Block", self.add_function_block, vbox_1)
         self.rm_fb_button = self.add_toggle_button("Delete", self.delete, vbox_1)
-        self.cn_fb_button = self.add_toggle_button("Connect Events", self.connect_events, vbox_1)
+        self.cn_fb_button = self.add_toggle_button("Connect", self.connect_events, vbox_1)
 
 
         listbox.add(row)
@@ -83,12 +62,7 @@ class FBE_ListBox(Gtk.Box):
 
         self.edit_fb_listbox = Gtk.ListBox()
         row = Gtk.ListBoxRow()
-        hbox_2 = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        label = Gtk.Label(label="EVENTS:", xalign=0)
-        row.add(hbox_2)
-        hbox_2.pack_start(label, True, True, 0)
-        label = Gtk.Label(label="	IN_EVENTS:", xalign=0)
-        hbox_2.pack_start(label, True, True, 0)
+        row.add(self.fb_editor.edit_fb_window)
 
         self.edit_fb_listbox.add(row)
         self.pack_start(self.edit_fb_listbox, True, True , 0)

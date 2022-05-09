@@ -6,7 +6,7 @@ from gi.repository import GLib, Gio, Gtk, GObject, Gdk
 from function_block.function_block import *
 
 from gui.fb_renderer import Function_Block_Renderer
-
+from gui.fb_cellrenderer import EditFunctionBlockWindow
 
 class MouseButtons:
 
@@ -39,6 +39,7 @@ class Function_Block_Editor(Gtk.Box):
         self.function_block_renderer.connect("draw", self.on_draw)
         self.function_block_renderer.connect("button-press-event", self.on_button_press)
         self.function_block_renderer.connect("button-release-event", self.on_button_press)
+        self.edit_fb_window = EditFunctionBlockWindow(self.selected_fb)
 
     def change_selected_fb(self, fb):
         self.selected_fb = fb
@@ -58,6 +59,7 @@ class Function_Block_Editor(Gtk.Box):
 
                     else:
                         self.selected_fb, selected_event, selected_var  = self.function_block_renderer.detect_fb(e.x, e.y)
+                        self.edit_fb_window.refresh(self.selected_fb)
                         self.function_block_renderer.detect_connection(e.x, e.y)
                         self.function_block_renderer.detect_fb(e.x, e.y)
                         self.ref_pos = [e.x, e.y]

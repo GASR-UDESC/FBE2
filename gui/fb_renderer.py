@@ -46,7 +46,7 @@ class Function_Block_Renderer(Gtk.DrawingArea):
         cr.line_to(i_pos_x, i_pos_y)
         cr.stroke()
 
-        self.write_txt(wid, cr, fb.name, i_pos_x + h_length/2-(7*len(fb.name)/2), gain + i_pos_y+t_vert_length+b_neck_height/2)
+        self.write_txt(wid, cr, fb.name, i_pos_x + h_length/2-(7*len(fb.name)/2), gain/2 + i_pos_y+t_vert_length+b_neck_height)
 
         i=0
         j=0
@@ -80,10 +80,10 @@ class Function_Block_Renderer(Gtk.DrawingArea):
                 for connection in var[1].connections:
                     if self.selected_cn == (var[1], connection):
                         cr.set_source_rgb(1,0,0)
-                        print("coloriu", var[1], "  ", connection)
+                        # ~ print("coloriu", var[1], "  ", connection)
                     else:
                         cr.set_source_rgb(0,0,0)
-                        print("descoloriu", var[1], "  ", connection)
+                        # ~ print("descoloriu", var[1], "  ", connection)
                     h_length, t_vert_length, b_vert_length = self.get_fb_measurements(var[1].block, gain=20)
                     if var[1].pos[0] > connection.pos[0]:
 
@@ -175,6 +175,9 @@ class Function_Block_Renderer(Gtk.DrawingArea):
                         var[1].selected = 1
                     else:
                         var[1].selected = 0
+            else: # clears selection
+                for var in selected_fb.variables.values():
+                    var.selected = 0
 
 
         return selected_fb, selected_event, selected_var
@@ -270,14 +273,14 @@ class Function_Block_Renderer(Gtk.DrawingArea):
                                     connection.selected_cn = True
                                     selfselected_cn = (event[1], connection)
 
-                    
+
             if self.selected_cn != None:
                 break
             for var in fb.variables.items():
                 var[1].selected_cn = False
                 for connection in var[1].connections:
                     connection.selected_cn = False
-                    h_length,_,_ = self.get_fb_measurements(var[1].block, gain=20)
+                    h_length,t_vert_length,b_vert_length = self.get_fb_measurements(var[1].block, gain=20)
                     mid = (connection.pos[0] - var[1].block.pos[0] - h_length)/2 + var[1].block.pos[0] + h_length
                     if connection.pos[0] > var[1].pos[0]:
                         if x<mid and x>(var[1].block.pos[0]+h_length):
@@ -404,6 +407,8 @@ class Function_Block_Renderer(Gtk.DrawingArea):
         h_length = gain*(int(math.ceil(0.2*len(max(z, key=len))))+2)
         t_vert_length = gain*max(len(in_events), len(out_events))
         b_vert_length = gain*(max(len(in_vars), len(out_vars))+1)
+        if h_length <= 7*len(fb.name):
+            h_length = 7*len(fb.name) + gain
 
         return h_length, t_vert_length, b_vert_length
 

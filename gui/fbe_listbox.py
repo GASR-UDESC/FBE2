@@ -3,8 +3,35 @@ import sys
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from function_block.function_block import Event
+from function_block.function_block import Variable
 
+class AddDialog(Gtk.Dialog):
+    def __init__(self, parent):
+        super().__init__(title="Add", flags=0)
+        self.add_buttons(
+            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OK, Gtk.ResponseType.OK
+        )
+        self.if_in = Gtk.CheckButton()
+        if_in_label = Gtk.Label("In")
+        self.set_default_size(150, 70)
 
+        self.entry = Gtk.Entry.new()
+        # ~ self.entry_value = self.entry.get_text()
+
+        box = self.get_content_area()
+        box.add(self.entry)
+        
+        check_box = Gtk.Box(orientation = Gtk.Orientation.HORIZONTAL)
+        check_box.pack_start(if_in_label, True, True, 0)
+        check_box.pack_start(self.if_in, True, True, 0)
+        
+        box.add(check_box)
+        
+        
+        self.show_all()
+		
+		
 class ListBoxRowWithData(Gtk.ListBoxRow):
     def __init__(self, data):
         super().__init__()
@@ -66,11 +93,14 @@ class FBE_ListBox(Gtk.Box):
 
         self.edit_fb_listbox.add(row)
         self.pack_start(self.edit_fb_listbox, True, True , 0)
+        self.add_button("Add Event", self.add_event, self.fb_editor.edit_fb_window)
+        self.add_button("Add Variable", self.add_variable, self.fb_editor.edit_fb_window)
 
     def add_button(self, label, function, box):
         button = Gtk.Button.new_with_label(label)
         button.connect("clicked", function)
         box.pack_start(button, False, False, 0)
+
 
     def add_toggle_button(self, label, function, box):
         button = Gtk.ToggleButton.new_with_label(label)
@@ -82,7 +112,8 @@ class FBE_ListBox(Gtk.Box):
         combo.insert(pos, _id, label)
 
     def add_function_block(self, button):
-
+        
+        self.add_fb_listbox.unselect_all()
         if self.add_fb_listbox in self.get_children():
             self.remove(self.add_fb_listbox)
             self.fb_editor.enable_add = False
@@ -93,6 +124,38 @@ class FBE_ListBox(Gtk.Box):
             self.cn_fb_button.set_active(False)
             self.pack_start(self.add_fb_listbox, True, True, 0)
             self.fb_editor.enable_add = True
+	
+    def add_event(self, button):
+        # ~ self.fb_editor.selected_fb.add_event()
+        dialog = AddDialog(self)
+        response = dialog.run()
+        entry = dialog.entry.get_text()
+
+        if response == Gtk.ResponseType.OK:
+            # ~ print("The OK button was clicked")
+            print(entry)
+            self.fb_editor.selected_fb.add_event(entry, Event(self.fb_editor.selected_fb, False, in_event = dialog.if_in.get_active()))		
+        elif response == Gtk.ResponseType.CANCEL:
+            # ~ print("The Cancel button was clicked")
+            pass
+
+        dialog.destroy()
+        
+    def add_variable(self, button):
+        # ~ self.fb_editor.selected_fb.add_event()
+        dialog = AddDialog(self)
+        response = dialog.run()
+        entry = dialog.entry.get_text()
+
+        if response == Gtk.ResponseType.OK:
+            # ~ print("The OK button was clicked")
+            print(entry)
+            self.fb_editor.selected_fb.add_variable(entry, Variable(self.fb_editor.selected_fb, False, in_var = dialog.if_in.get_active()))		
+        elif response == Gtk.ResponseType.CANCEL:
+            # ~ print("The Cancel button was clicked")
+            pass
+
+        dialog.destroy()
 
     def delete(self, button):
         if self.fb_editor.enable_remove:

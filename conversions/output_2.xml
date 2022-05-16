@@ -1,0 +1,19 @@
+<FBType Comment="Basic FB with empty ECC" Name="Basic">
+  <Identification Standard="61499-2" />
+  <VersionInfo Author="AZ" Date="2016-05-26" Organization="fortiss GmbH" Version="1.0" />
+  <InterfaceList>
+    <EventInputs>  
+    <Event Comment="" Name="EI" Type="Event" /></EventInputs>
+    <EventOutputs>
+    </EventOutputs>
+    <InputVars>
+    </InputVars>
+    <OutputVars>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Comment="Initial State" Name="START" x="550.0" y="425.0" />
+    </ECC>
+  </BasicFB>
+</FBType>

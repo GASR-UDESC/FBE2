@@ -6,7 +6,7 @@ from gi.repository import GLib, Gio, Gtk, GObject, Gdk
 from function_block.function_block import *
 
 from gui.fb_renderer import Function_Block_Renderer
-from gui.fb_cellrenderer import EditFunctionBlockWindow
+from gui.edit_fb_combobox import EditFunctionBlockWindow
 
 class MouseButtons:
 

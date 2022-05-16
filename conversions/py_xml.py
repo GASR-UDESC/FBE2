@@ -1,5 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
+import xml.etree.ElementTree as ET
 import time
 
 class Base_Function_Block():
@@ -69,7 +70,7 @@ class Event():
 
 
 class Variable():
-    def __init__(self, block, value=None, in_var=False, var_type = "BOOL"):
+    def __init__(self, block, value=None, in_var=False):
         self.value = value
         self.block = block
         self.connections = set()
@@ -77,7 +78,6 @@ class Variable():
         self.selected = False
         self.selected_cn = False
         self.pos = [0,0]
-        self.type = var_type
 
     def set_value(self, value=None):
         self.value = value
@@ -116,9 +116,9 @@ class E_CTU(Base_Function_Block):
         self.add_event('R', Event(self, R, in_event=True))
         self.add_event('CUO', Event(self))
         self.add_event('RO', Event(self))
-        self.add_variable('PV', Variable(self, PV, in_var=True, var_type="INT"))
+        self.add_variable('PV', Variable(self, PV, in_var=True))
         self.add_variable('Q', Variable(self, Q, in_var=True))
-        self.add_variable('CV', Variable(self, CV, in_var=True, var_type="INT"))
+        self.add_variable('CV', Variable(self, CV, in_var=True))
 
     def algorithm(self):
         if self.R.active:
@@ -165,7 +165,7 @@ class E_DEMUX(Base_Function_Block):
         self.add_event('EO1', Event(self))
         self.add_event('EO2', Event(self))
         self.add_event('EO3', Event(self))
-        self.add_variable('K', Variable(self, K, in_var=True, var_type="INT"))
+        self.add_variable('K', Variable(self, K, in_var=True))
 
     def algorithm(self):
         if self.EI.active:
@@ -199,7 +199,7 @@ class E_DELAY(Base_Function_Block):
 
         self.add_event('START', Event(self, START, in_event=True))
         self.add_event('STOP', Event(self, STOP, in_event=True))
-        self.add_variable('DT', Variable(self, DT, in_var=True, var_type="INT"))
+        self.add_variable('DT', Variable(self, DT, in_var=True))
         self.add_event('EO', Event(self))
         self.first_run = True
         self.start_time = None
@@ -237,7 +237,7 @@ class E_CYCLE(Base_Function_Block):
         self.add_event('START', Event(self, START, in_event=True))
         self.add_event('STOP', Event(self, STOP, in_event=True))
         self.add_event('EO', Event(self))
-        self.add_variable('DT', Variable(self, DT, in_var=True, var_type="INT"))
+        self.add_variable('DT', Variable(self, DT, in_var=True))
         self.start_time = 0
         self.running = False
 
@@ -464,4 +464,45 @@ class world():
 
 
 
+
+
+# ~ tree = ET.parse('Basic2.fbt')
+# ~ root = tree.getroot()
+
+# ~ for in_events in root.iter("EventInputs"):
+	# ~ ET.SubElement(in_events, "Event",  {"Comment": "", "Name": "EI0", "Type": "Event"})
+	# ~ ET.SubElement(in_events, "Event",  {"Comment": "", "Name": "EI1", "Type": "Event"})
+	# ~ ET.SubElement(in_events, "Event",  {"Comment": "", "Name": "EI2", "Type": "Event"})
+# ~ for in_events in root.iter("EventOutputs"):
+	# ~ ET.SubElement(in_events, "Event",  {"Comment": "", "Name": "EO", "Type": "Event"})
+# ~ for in_events in root.iter("InputVars"):
+	# ~ ET.SubElement(in_events, "VarDeclaration",  {"Comment": "", "Name": "PERMIT", "Type": "BOOL"})
+
+
+# ~ tree.write('output.xml')
+
+
+def convert_basic_fb_xml(fb, name):
+	tree = ET.parse("Basic2.fbt")
+	root = tree.getroot()
+	for read in root.iter("EventInputs"):
+		for event in fb.events.items():
+			if event[1].in_event:
+				ET.SubElement(read, "Event", {"Comment": "", "Name": event[0], "Type": "Event"})
+	for read in root.iter("EventOutputs"):
+		for event in fb.events.items():
+			if event[1].in_event==0:
+				ET.SubElement(read, "Event", {"Comment": "", "Name": event[0], "Type": "Event"})
+	for read in root.iter("InputVars"):
+		for variable in fb.variables.items():
+			if variable[1].in_var:
+				ET.SubElement(read, "VarDeclaration", {"Comment": "", "Name": variable[0], "Type": "Naosei"})
+	for read in root.iter("OutputVars"):
+		for variable in fb.variables.items():
+			if variable[1].in_var==0:
+				ET.SubElement(read, "VarDeclaration", {"Comment": "", "Name": event[0], "Type": "Naosei"})
+	tree.write(name+".xml")
+
+PERM = PERMIT(EI=False, PERMIT=True)
+convert_basic_fb_xml(PERM, "junior")
 

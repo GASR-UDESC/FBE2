@@ -180,7 +180,7 @@ class FBE_ListBox(Gtk.Box):
     def on_type_changed(self, combo):
         selected = combo.get_active_text()
         event_driven = ["PERMIT", "E_CTU", "E_MERGE","E_RESTART", "E_CYCLE", "E_DELAY", "E_DEMUX"]
-        service_interface = ["IO_WRITER", "IO_READER", "PID_SIMPLE"]
+        service_interface = ["IO_WRITER", "IO_READER", "PID_SIMPLE", "Base Function Block"]
         selected_type = list()
         if selected == 'Event Driven':
             selected_type = event_driven

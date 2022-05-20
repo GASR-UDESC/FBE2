@@ -16,7 +16,6 @@
   </InterfaceList>
   <BasicFB>
     <ECC>
-      <ECState Comment="Initial State" Name="START" x="550.0" y="425.0"/>
     </ECC>
   </BasicFB>
 </FBType>

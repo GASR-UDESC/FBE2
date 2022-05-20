@@ -19,7 +19,7 @@
   </InterfaceList>
   <SimpleFB>
   <Algorithm Name="REQ" Comment="" >
-    <PY Text="if " />
+    <ST Text="" />
   </Algorithm>
   </SimpleFB>
 </FBType>

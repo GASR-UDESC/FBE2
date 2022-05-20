@@ -404,9 +404,15 @@ class Function_Block_Renderer(Gtk.DrawingArea):
             for i in range(len(out_vars)):
                 z.append(out_vars[i])
         # print(z)
-        h_length = gain*(int(math.ceil(0.2*len(max(z, key=len))))+2)
-        t_vert_length = gain*max(len(in_events), len(out_events))
-        b_vert_length = gain*(max(len(in_vars), len(out_vars))+1)
+        try:
+            h_length = gain*(int(math.ceil(0.2*len(max(z, key=len))))+2)
+            t_vert_length = gain*max(len(in_events), len(out_events))
+            b_vert_length = gain*(max(len(in_vars), len(out_vars))+1)
+        except:
+            h_length = 7*len(fb.name) + gain
+            t_vert_length = gain
+            b_vert_length = gain*2
+			
         if h_length <= 7*len(fb.name):
             h_length = 7*len(fb.name) + gain
 

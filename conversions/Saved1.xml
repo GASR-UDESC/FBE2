@@ -5,15 +5,14 @@
     <EventInputs>  
     <Event Comment="" Name="EI" Type="Event" /></EventInputs>
     <EventOutputs>
-    </EventOutputs>
+    <Event Comment="" Name="EO" Type="Event" /></EventOutputs>
     <InputVars>
-    </InputVars>
+    <VarDeclaration Comment="" Name="PERMIT" Type="BOOL" /></InputVars>
     <OutputVars>
     </OutputVars>
   </InterfaceList>
   <BasicFB>
     <ECC>
-      <ECState Comment="Initial State" Name="START" x="550.0" y="425.0" />
-    </ECC>
+    <ECState Comment="" Name="START" /><ECState Comment="" Name="EO" /></ECC>
   </BasicFB>
 </FBType>

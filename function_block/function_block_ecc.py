@@ -3,25 +3,68 @@
 import time
 
 class ECC():
-	def __init__(self, *args, **kwargs):
+	def __init__(self, fb, *args, **kwargs):
 		self.states = set()
 		self.events = set()
-		self.add_state("START", State("START"))
-
+		self.current_state = None
 
 	def add_state(self, name, state):
 		setattr(self, name, state)
 		self.states.add(state)
+			
+	def set_current_state(self, state):
+		self.current_state = state
 		
+	def run_ecc(self, event):
+		if event in self.current_state.connections:
+			con = self.current_state.connections[event]
+			if con[2] == "==":
+				if con[1] == con[3]:
+					self.current_state = con[0]
+					for ec_action in self.current_state.ec_actions:
+						self.fb.ec_action[1]()
+						getattr(self.fb, ec_action[2]).active = True
+			if con[2] == "!=":
+				if con[1] != con[3]:
+					self.current_state = con[0]
+					for ec_action in self.current_state.ec_actions:
+						self.fb.ec_action[1]()
+						getattr(self.fb, ec_action[2]).active = True
+			if con[2] == ">":
+				if con[1] > con[3]:
+					self.current_state = con[0]
+					for ec_action in self.current_state.ec_actions:
+						self.fb.ec_action[1]()
+						getattr(self.fb, ec_action[2]).active = True
+			if con[2] == "<":
+				if con[1] < con[3]:
+					self.current_state = con[0]
+					for ec_action in self.current_state.ec_actions:
+						self.fb.ec_action[1]()
+						getattr(self.fb, ec_action[2]).active = True
+			if con[2] == ">=":
+				if con[1] >= con[3]:
+					self.current_state = con[0]
+					for ec_action in self.current_state.ec_actions:
+						self.fb.ec_action[1]()
+						getattr(self.fb, ec_action[2]).active = True
+			if con[2] == "<=":
+				if con[1] <= con[3]:
+					self.current_state = con[0]
+					for ec_action in self.current_state.ec_actions:
+						self.fb.ec_action[1]()
+						getattr(self.fb, ec_action[2]).active = True
+	
 	
 class State():
-	def __init__(self, name, ec_action=None, *args, **kwargs):
-		self.connections = dict() # connections are EVENT:(STATE, VARIABLE, CONDITION) this is where "With" statement comes in  
+	def __init__(self, name, ec_actions=None, *args, **kwargs): # ec_actions is a list, ec_action is (algorithm_name, algorithm, output)
+		self.connections = dict() # connections are EVENT:(STATE, VARIABLE, CONDITION_STATEMENT, CONDITION) this is where "With" statement comes in  
 		self.name = name
-		self.ec_action = ec_action
+		self.ec_actions = ec_actions
 
-	def add_connection(self, state, event, variable=None, condition=1):
-		self.connections[state] = (event, variable, condition)	
+		
+	def add_connection(self, state, event, variable=None, condition_stmnt = None, condition=1): # condition_stmnt {"==": "eq", "!=": "ne", ">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
+		self.connections[state] = (event, variable, condition_stmnt, condition)	
 
 			
 	
@@ -131,10 +174,12 @@ class PERMIT(Base_Function_Block):
 		
 		self.type = "Basic"
 		
-		self.ecc = ECC()
+		self.ecc = ECC(self)
+		self.ecc.add_state("START", State("START"))
 		self.ecc.add_state('EO', State('EO'))
 		self.ecc.START.add_connection(self.ecc.EO, self.EI, self.PERMIT, 1)
 		self.ecc.EO.add_connection(self.ecc.START, 1)
+		self.ecc.set_current_state(self.ecc.START)
 
     def algorithm(self):
         if self.EI.active and self.PERMIT.value:
@@ -157,14 +202,15 @@ class E_CTU(Base_Function_Block):
         self.add_variable('CV', Variable(self, CV, in_var=True, var_type="INT"))
         self.type = "Basic"
         
-        self.ecc = ECC()
+        self.ecc = ECC(self)
+        self.ecc.add_state("START", State("START"))
         self.ecc.add_state('CUO', State('CUO'))
 		self.ecc.START.add_connection(self.ecc.CUO, self.CU, self.CV, self.PV)
 		self.ecc.add_state('RO', State('RO'))
 		self.ecc.START.add_connection(self.ecc.EO, self.R)
 		self.ecc.RO.add_connection(self.ecc.START, 1)
 		self.ecc.CUO.add_connection(self.ecc.START, 1)
-		
+		self.ecc.set_current_state(self.ecc.START)
 		
     def algorithm(self):
         if self.R.active:
@@ -216,7 +262,8 @@ class E_DEMUX(Base_Function_Block):
 		self.type = "Basic"
 		
 		
-		self.ecc = ECC()
+		self.ecc = ECC(self)
+		self.ecc.add_state("START", State("START"))
 		self.ecc.add_state('EO0', State('EI'))
 		self.ecc.add_state('EO1', State('EI'))
 		self.ecc.add_state('EO2', State('EI'))
@@ -234,6 +281,7 @@ class E_DEMUX(Base_Function_Block):
 		self.EO1.add_connection(self.ecc.START, 1)
 		self.EO2.add_connection(self.ecc.START, 1)
 		self.EO3.add_connection(self.ecc.START, 1)
+		self.ecc.set_current_state(self.ecc.START)
 		
     def algorithm(self):
         if self.EI.active:
@@ -460,13 +508,6 @@ class world():
                         var.connections.remove(connection)
         self.function_blocks.discard(function_block)
 
-    def create_graph(self):
-        for block in self.function_blocks:
-            for event in block.events.values():
-                self.graph[event] = set() 	
-                for in_event in event.connections:
-                    self.graph[event].add(in_event)
-
     def read_through(self, block, path):
         empty_block_flag = True
         for event in block.events.values():
@@ -518,7 +559,9 @@ class world():
                 print(event[0], ':', event[1].active)
 
     def simple_run_through(self, i_fb):
-        i_fb.algorithm()
+		if hasattr(i_fb, 'ecc'):
+			i_fb.ecc.run_ecc()
+        i_fb.run()
         for event in i_fb.events.values():
             for i_event in event.connections:
                 self.simple_run_through(i_event.block)

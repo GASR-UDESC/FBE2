@@ -176,17 +176,11 @@ class PERMIT(Base_Function_Block):
 		
 		self.ecc = ECC(self)
 		self.ecc.add_state("START", State("START"))
-		self.ecc.add_state('EO', State('EO'))
+		self.ecc.add_state('EO', State('EO', ec_actions=[(None, None, "EO")]))
 		self.ecc.START.add_connection(self.ecc.EO, self.EI, self.PERMIT, 1)
 		self.ecc.EO.add_connection(self.ecc.START, 1)
 		self.ecc.set_current_state(self.ecc.START)
 
-    def algorithm(self):
-        if self.EI.active and self.PERMIT.value:
-            self.EO.active = True 		
-        else:
-            self.EO.active = False
-        self.run()
 
 #Contador
 class E_CTU(Base_Function_Block):
@@ -204,24 +198,13 @@ class E_CTU(Base_Function_Block):
         
         self.ecc = ECC(self)
         self.ecc.add_state("START", State("START"))
-        self.ecc.add_state('CUO', State('CUO'))
+        self.ecc.add_state('CUO', State('CUO', ec_actions=[('Count', counter, 'CUO')]))
 		self.ecc.START.add_connection(self.ecc.CUO, self.CU, self.CV, self.PV)
-		self.ecc.add_state('RO', State('RO'))
+		self.ecc.add_state('RO', State('RO', ec_actions=[('Reset', reset, 'RUO')]))
 		self.ecc.START.add_connection(self.ecc.EO, self.R)
 		self.ecc.RO.add_connection(self.ecc.START, 1)
 		self.ecc.CUO.add_connection(self.ecc.START, 1)
 		self.ecc.set_current_state(self.ecc.START)
-		
-    def algorithm(self):
-        if self.R.active:
-            self.reset()
-        else:
-            self.RO.active = False
-        if self.CU.active:
-            self.counter()
-        else:
-            self.CUO.active = False	
-        self.run()
 
     def reset(self):
         RO = True
@@ -236,18 +219,20 @@ class E_CTU(Base_Function_Block):
 
 class E_MERGE(Base_Function_Block):
     def __init__(self, name="E_MERGE", **kwargs):
-        super().__init__(name, **kwargs)		
+        super().__init__(name, EI0, EI1, **kwargs)		
 
+		self.add_event("EI0", Event(self, EI0, in_event=True))
+		self.add_event("EI1", Event(self, EI1, in_event=True))
         self.add_event("EO", Event(self))
 		self.type = "Basic"
 		
-    def algorithm(self):
-        for event in vars(self).values():
-            if event.active == True:
-                self.EO = True
-            else:
-                self.EO = False 
-
+		self.ecc = ECC(self)
+		self.ecc.add_state("START", State("START"))
+		self.ecc.add_state("EO", State("EO", ec_actions=[(None, None, "EO")]))
+		self.ecc.START.add_connection(self.ecc.EO, self.EI0)
+		self.ecc.START.add_connection(self.ecc.EO, self.EI1)
+		self.ecc.EO.add_connection(self.ecc.START, 1)
+		
 #Demultiplexação		
 class E_DEMUX(Base_Function_Block):
     def __init__(self, EI=None, K=None, name='E_DEMUX', **kwargs):
@@ -264,10 +249,10 @@ class E_DEMUX(Base_Function_Block):
 		
 		self.ecc = ECC(self)
 		self.ecc.add_state("START", State("START"))
-		self.ecc.add_state('EO0', State('EI'))
-		self.ecc.add_state('EO1', State('EI'))
-		self.ecc.add_state('EO2', State('EI'))
-		self.ecc.add_state('EO3', State('EI'))
+		self.ecc.add_state('EO0', State('EI', ec_actions=[(None, None, "EO0")]))
+		self.ecc.add_state('EO1', State('EI', ec_actions=[(None, None, "EO1")]))
+		self.ecc.add_state('EO2', State('EI', ec_actions=[(None, None, "EO2")]))
+		self.ecc.add_state('EO3', State('EI', ec_actions=[(None, None, "EO3")]))
 		self.ecc.add_state('state', State('State'))
 		self.ecc.START.add_connection(self.ecc.state, self.EI)
 		self.ecc.START.add_connection(self.ecc.state, self.EI)
@@ -282,31 +267,6 @@ class E_DEMUX(Base_Function_Block):
 		self.EO2.add_connection(self.ecc.START, 1)
 		self.EO3.add_connection(self.ecc.START, 1)
 		self.ecc.set_current_state(self.ecc.START)
-		
-    def algorithm(self):
-        if self.EI.active:
-            k = self.K.value
-            if k == 0:
-                self.EO0.active = True
-                self.EO1.active = False
-                self.EO2.active = False
-                self.EO3.active = False	
-            elif k == 1:
-                self.EO0.active = False
-                self.EO1.active = True
-                self.EO2.active = False
-                self.EO3.active = False	
-            elif k == 2:
-                self.EO0.active = False
-                self.EO1.active = False
-                self.EO2.active = True
-                self.EO3.active = False
-            elif k == 3:
-                self.EO0.active = False
-                self.EO1.active = False
-                self.EO2.active = False
-                self.EO3.active = True
-            self.run()
 
 
 class E_DELAY(Base_Function_Block):

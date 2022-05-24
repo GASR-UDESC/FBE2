@@ -3,27 +3,77 @@
 import time
 
 class ECC():
-	def __init__(self, *args, **kwargs):
-		self.states = set()
-		self.events = set()
-		self.add_state("START", State("START"))
+    def __init__(self, fb, *args, **kwargs):
+        self.states = set()
+        self.events = set()
+        self.current_state = None
+
+    def add_state(self, name, state):
+        setattr(self, name, state)
+        self.states.add(state)
+
+    def set_current_state(self, state):
+        self.current_state = state
+
+    def run_ecc(self, event):
+        if event in self.current_state.connections:
+            con = self.current_state.connections[event]
+            if con[2] == "==":
+                if con[1] == con[3]:
+                    self.current_state = con[0]
+                    for ec_action in self.current_state.ec_actions:
+                        if ec_action[1] is not None:
+                            self.fb.ec_action[1]()
+                        getattr(self.fb, ec_action[2]).active = True
+            if con[2] == "!=":
+                if con[1] != con[3]:
+                    self.current_state = con[0]
+                    for ec_action in self.current_state.ec_actions:
+                        if ec_action[1] is not None:
+                            self.fb.ec_action[1]()
+                        getattr(self.fb, ec_action[2]).active = True
+            if con[2] == ">":
+                if con[1] > con[3]:
+                    self.current_state = con[0]
+                    for ec_action in self.current_state.ec_actions:
+                        if ec_action[1] is not None:
+                            self.fb.ec_action[1]()
+                        getattr(self.fb, ec_action[2]).active = True
+            if con[2] == "<":
+                if con[1] < con[3]:
+                    self.current_state = con[0]
+                    for ec_action in self.current_state.ec_actions:
+                        if ec_action[1] is not None:
+                            self.fb.ec_action[1]()
+                        getattr(self.fb, ec_action[2]).active = True
+            if con[2] == ">=":
+                if con[1] >= con[3]:
+                    self.current_state = con[0]
+                    for ec_action in self.current_state.ec_actions:
+                        if ec_action is not None:
+                            self.fb.ec_action[1]()
+                        getattr(self.fb, ec_action[2]).active = True
+            if con[2] == "<=":
+                if con[1] <= con[3]:
+                    self.current_state = con[0]
+                    for ec_action in self.current_state.ec_actions:
+                        if ec_action is not None:
+                            self.fb.ec_action[1]()
+                        getattr(self.fb, ec_action[2]).active = True
 
 
-	def add_state(self, name, state):
-		setattr(self, name, state)
-		self.states.add(state)
-		
-	
 class State():
-	def __init__(self, name, *args, **kwargs):
-		self.connections = dict() # connections are EVENT:(STATE, VARIABLE, CONDITION) this is where "With" statement comes in  
-		self.name = name
+    def __init__(self, name, ec_actions=None, *args, **kwargs): # ec_actions is a list, ec_action is (algorithm_name, algorithm, output)
+        self.connections = dict() # connections are EVENT:(STATE, VARIABLE, CONDITION_STATEMENT, CONDITION) this is where "With" statement comes in  
+        self.name = name
+        self.ec_actions = ec_actions
 
-	def add_connection(self, state, event, variable=None, condition=1):
-		self.connections[state] = (event, variable, condition)	
 
-			
-	
+    def add_connection(self, state, event, variable=None, condition_stmnt = None, condition=1): # condition_stmnt {"==": "eq", "!=": "ne", ">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
+        self.connections[state] = (event, variable, condition_stmnt, condition)	
+
+
+
 class Base_Function_Block():
     def __init__(self, name="NEW_FB", **kwargs):
         self.events = dict()
@@ -69,9 +119,9 @@ class Base_Function_Block():
             var.run()
 
 # ~ class ServiceInterface(Base_Function_Block):
-	# ~ def __init__(self, *args, **kwargs):
-		# ~ super().__init__(name, *args, **kwargs)
-		
+        # ~ def __init__(self, *args, **kwargs):
+                # ~ super().__init__(name, *args, **kwargs)
+
 
 
 class Event(): 
@@ -125,22 +175,18 @@ class PERMIT(Base_Function_Block):
         # ~ self.EI = Event(EI)
         self.add_event('EI', Event(self, EI, in_event=True))
         self.add_event('EO', Event(self))	
-		
+
         self.add_variable('PERMIT', Variable(self, PERMIT, in_var=True))
-		
+
         self.type = "Basic"
-        
-        self.ecc = ECC()
-        self.ecc.add_state('EO', State('EO'))
+
+        self.ecc = ECC(self)
+        self.ecc.add_state("START", State("START"))
+        self.ecc.add_state('EO', State('EO', ec_actions=[(None, None, "EO")]))
         self.ecc.START.add_connection(self.ecc.EO, self.EI, self.PERMIT, 1)
         self.ecc.EO.add_connection(self.ecc.START, 1)
+        self.ecc.set_current_state(self.ecc.START)
 
-    def algorithm(self):
-        if self.EI.active and self.PERMIT.value:
-            self.EO.active = True 		
-        else:
-            self.EO.active = False
-        self.run()
 
 #Contador
 class E_CTU(Base_Function_Block):
@@ -155,26 +201,16 @@ class E_CTU(Base_Function_Block):
         self.add_variable('Q', Variable(self, Q, in_var=True))
         self.add_variable('CV', Variable(self, CV, in_var=True, var_type="INT"))
         self.type = "Basic"
-        
-        self.ecc = ECC()
-        self.ecc.add_state('CUO', State('CUO'))
+
+        self.ecc = ECC(self)
+        self.ecc.add_state("START", State("START"))
+        self.ecc.add_state('CUO', State('CUO', ec_actions=[('Count', self.counter, 'CUO')]))
         self.ecc.START.add_connection(self.ecc.CUO, self.CU, self.CV, self.PV)
-        self.ecc.add_state('RO', State('RO'))
+        self.ecc.add_state('RO', State('RO', ec_actions=[('Reset', reset, 'RUO')]))
         self.ecc.START.add_connection(self.ecc.EO, self.R)
         self.ecc.RO.add_connection(self.ecc.START, 1)
         self.ecc.CUO.add_connection(self.ecc.START, 1)
-		
-		
-    def algorithm(self):
-        if self.R.active:
-            self.reset()
-        else:
-            self.RO.active = False
-        if self.CU.active:
-            self.counter()
-        else:
-            self.CUO.active = False	
-        self.run()
+        self.ecc.set_current_state(self.ecc.START)
 
     def reset(self):
         RO = True
@@ -193,7 +229,7 @@ class E_MERGE(Base_Function_Block):
 
         self.add_event("EO", Event(self))
         self.type = "Basic"
-		
+
     def algorithm(self):
         for event in vars(self).values():
             if event.active == True:
@@ -213,46 +249,28 @@ class E_DEMUX(Base_Function_Block):
         self.add_event('EO3', Event(self))
         self.add_variable('K', Variable(self, K, in_var=True, var_type="INT"))
         self.type = "Basic"
-        
-        
-        self.ecc = ECC()
-        self.ecc.add_state('EO0', State('EI'))
-        self.ecc.add_state('EO1', State('EI'))
-        self.ecc.add_state('EO2', State('EI'))
-        self.ecc.add_state('EO3', State('EI'))
-        self.ecc.START.add_connection(self.ecc.EO0, self.EI, self.K, 0)
-        self.ecc.START.add_connection(self.ecc.EO1, self.EI, self.K, 1)
-        self.ecc.START.add_connection(self.ecc.EO2, self.EI, self.K, 2)
-        self.ecc.START.add_connection(self.ecc.EO3, self.EI, self.K, 3)
+
+
+        self.ecc = ECC(self)
+        self.ecc.add_state("START", State("START"))
+        self.ecc.add_state('EO0', State('EI', ec_actions=[(None, None, "EO0")]))
+        self.ecc.add_state('EO1', State('EI', ec_actions=[(None, None, "EO1")]))
+        self.ecc.add_state('EO2', State('EI', ec_actions=[(None, None, "EO2")]))
+        self.ecc.add_state('EO3', State('EI', ec_actions=[(None, None, "EO3")]))
+        self.ecc.add_state('state', State('State'))
+        self.ecc.START.add_connection(self.ecc.state, self.EI)
+        self.ecc.START.add_connection(self.ecc.state, self.EI)
+        self.ecc.START.add_connection(self.ecc.state, self.EI)
+        self.ecc.START.add_connection(self.ecc.state, self.EI)
+        self.ecc.START.add_connection(self.ecc.EO0, 1, self.K, 0)
+        self.ecc.START.add_connection(self.ecc.EO1, 1, self.K, 1)
+        self.ecc.START.add_connection(self.ecc.EO2, 1, self.K, 2)
+        self.ecc.START.add_connection(self.ecc.EO3, 1, self.K, 3)
         self.EO0.add_connection(self.ecc.START, 1)
         self.EO1.add_connection(self.ecc.START, 1)
         self.EO2.add_connection(self.ecc.START, 1)
         self.EO3.add_connection(self.ecc.START, 1)
-		
-    def algorithm(self):
-        if self.EI.active:
-            k = self.K.value
-            if k == 0:
-                self.EO0.active = True
-                self.EO1.active = False
-                self.EO2.active = False
-                self.EO3.active = False	
-            elif k == 1:
-                self.EO0.active = False
-                self.EO1.active = True
-                self.EO2.active = False
-                self.EO3.active = False	
-            elif k == 2:
-                self.EO0.active = False
-                self.EO1.active = False
-                self.EO2.active = True
-                self.EO3.active = False
-            elif k == 3:
-                self.EO0.active = False
-                self.EO1.active = False
-                self.EO2.active = False
-                self.EO3.active = True
-            self.run()
+        self.ecc.set_current_state(self.ecc.START)
 
 
 class E_DELAY(Base_Function_Block):
@@ -290,7 +308,7 @@ class E_RESTART(Base_Function_Block):
         self.add_event('WARM', Event(self, WARM))		
         self.add_event('STOP', Event(self, STOP))
         self.type = "Service Interface"
-		
+
     def algorithm(self):
         self.run()
 
@@ -305,7 +323,7 @@ class E_CYCLE(Base_Function_Block):
         self.start_time = 0
         self.running = False
         self.type = "Service Interface"
-		
+
     def algorithm(self):
         if self.START.active:
             self.running = True
@@ -337,7 +355,7 @@ class IO_WRITER(Base_Function_Block):
         self.add_variable('STATUS', Variable(self))
         self.add_variable('RD_1', Variable(self))
         self.type = "Service Interface"
-		
+
     def algorithm(self):
         if self.INIT.active:
             if self.QI and self.REQ:
@@ -369,8 +387,8 @@ class IO_READER(Base_Function_Block):
         self.add_variable('STATUS', Variable(self))
         self.add_variable('RD_1', Variable(self))
         self.type = "Service Interface"
-		
-		
+
+
     def algorithm(self):
         if self.INIT.active:
             if self.QI and self.REQ:
@@ -400,7 +418,7 @@ class PID_SIMPLE(Base_Function_Block):
         self.add_event('INITO', Event(self))		
         self.add_event('CNF', Event(self))
         self.type = "Service Interface"	
-        
+
         # Variables go here
 
         def algorithm(self):
@@ -454,13 +472,6 @@ class world():
                         var.connections.remove(connection)
         self.function_blocks.discard(function_block)
 
-    def create_graph(self):
-        for block in self.function_blocks:
-            for event in block.events.values():
-                self.graph[event] = set() 	
-                for in_event in event.connections:
-                    self.graph[event].add(in_event)
-
     def read_through(self, block, path):
         empty_block_flag = True
         for event in block.events.values():
@@ -505,14 +516,16 @@ class world():
                     _in_var = out_var
                     _out_var = in_var
                 _out_var.add_connection(_in_var)
-	
+
     def function_block_states(self):
         for fb in self.function_blocks:
             for event in fb.events.items():
                 print(event[0], ':', event[1].active)
 
     def simple_run_through(self, i_fb):
-        i_fb.algorithm()
+        if hasattr(i_fb, 'ecc'):
+            i_fb.ecc.run_ecc()
+        i_fb.run()
         for event in i_fb.events.values():
             for i_event in event.connections:
                 self.simple_run_through(i_event.block)

@@ -206,8 +206,8 @@ class E_CTU(Base_Function_Block):
         self.ecc.add_state("START", State("START"))
         self.ecc.add_state('CUO', State('CUO', ec_actions=[('Count', self.counter, 'CUO')]))
         self.ecc.START.add_connection(self.ecc.CUO, self.CU, self.CV, self.PV)
-        self.ecc.add_state('RO', State('RO', ec_actions=[('Reset', reset, 'RUO')]))
-        self.ecc.START.add_connection(self.ecc.EO, self.R)
+        self.ecc.add_state('RO', State('RO', ec_actions=[('Reset', self.reset, 'RUO')]))
+        self.ecc.START.add_connection(self.ecc.RO, self.R)
         self.ecc.RO.add_connection(self.ecc.START, 1)
         self.ecc.CUO.add_connection(self.ecc.START, 1)
         self.ecc.set_current_state(self.ecc.START)
@@ -519,14 +519,15 @@ class world():
 
     def function_block_states(self):
         for fb in self.function_blocks:
+            print(fb.name)
             for event in fb.events.items():
                 print(event[0], ':', event[1].active)
 
     def simple_run_through(self, i_fb):
-        if hasattr(i_fb, 'ecc'):
-            i_fb.ecc.run_ecc()
         i_fb.run()
         for event in i_fb.events.values():
+            if hasattr(i_fb, 'ecc'):
+                i_fb.ecc.run_ecc(event)
             for i_event in event.connections:
                 self.simple_run_through(i_event.block)
 

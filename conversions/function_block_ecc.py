@@ -6,6 +6,7 @@ class ECC():
     def __init__(self, fb, *args, **kwargs):
         self.states = set()
         self.events = set()
+        self.fb = fb
         self.current_state = None
 
     def add_state(self, name, state):
@@ -16,50 +17,66 @@ class ECC():
         self.current_state = state
 
     def run_ecc(self, event):
-        if event in self.current_state.connections:
+        #print(self.fb.name)
+        print(self.fb.name+"==" + self.current_state.name)
+        if event in self.current_state.connections.keys() and event.active:
             con = self.current_state.connections[event]
+            if con[1] == None:
+                self.current_state = con[0]
+                for ec_action in self.current_state.ec_actions:
+                    if ec_action[1] is not None:
+                        print(ec_action[1])
+                        ec_action[1]()
+                    getattr(self.fb, ec_action[2]).active = True
+
             if con[2] == "==":
-                if con[1] == con[3]:
+                if con[1].value == con[3]:
+                   # print(self.fb.name)
+                    print("!!not here!!")
+                    self.current_state = con[0]
+                    for ec_action in self.current_state.ec_actions:
+                        print(ec_action[1])
+                        print("not here")
+                        if ec_action[1] is not None:
+                            print("not here")
+                            fb.ec_action[1]()
+                        getattr(self.fb, ec_action[2]).active = True
+            elif con[2] == "!=":
+                if con[1].value != con[3]:
                     self.current_state = con[0]
                     for ec_action in self.current_state.ec_actions:
                         if ec_action[1] is not None:
-                            self.fb.ec_action[1]()
+                            fb.ec_action[1]()
                         getattr(self.fb, ec_action[2]).active = True
-            if con[2] == "!=":
-                if con[1] != con[3]:
+            elif con[2] == ">":
+                if con[1].value > con[3]:
                     self.current_state = con[0]
                     for ec_action in self.current_state.ec_actions:
                         if ec_action[1] is not None:
-                            self.fb.ec_action[1]()
+                            ec_action[1]()
                         getattr(self.fb, ec_action[2]).active = True
-            if con[2] == ">":
-                if con[1] > con[3]:
+            elif con[2] == "<":
+                if con[1].value < con[3]:
                     self.current_state = con[0]
                     for ec_action in self.current_state.ec_actions:
                         if ec_action[1] is not None:
-                            self.fb.ec_action[1]()
+                            ec_action[1]()
                         getattr(self.fb, ec_action[2]).active = True
-            if con[2] == "<":
-                if con[1] < con[3]:
+            elif con[2] == ">=":
+                if con[1].value >= con[3]:
                     self.current_state = con[0]
                     for ec_action in self.current_state.ec_actions:
                         if ec_action[1] is not None:
-                            self.fb.ec_action[1]()
+                            fb.ec_action[1]()
                         getattr(self.fb, ec_action[2]).active = True
-            if con[2] == ">=":
-                if con[1] >= con[3]:
+            elif con[2] == "<=":
+                if con[1].value <= con[3]:
                     self.current_state = con[0]
                     for ec_action in self.current_state.ec_actions:
-                        if ec_action is not None:
-                            self.fb.ec_action[1]()
+                        if ec_action[1] is not None:
+                            fb.ec_action[1]()
                         getattr(self.fb, ec_action[2]).active = True
-            if con[2] == "<=":
-                if con[1] <= con[3]:
-                    self.current_state = con[0]
-                    for ec_action in self.current_state.ec_actions:
-                        if ec_action is not None:
-                            self.fb.ec_action[1]()
-                        getattr(self.fb, ec_action[2]).active = True
+
 
 
 class State():
@@ -70,7 +87,7 @@ class State():
 
 
     def add_connection(self, state, event, variable=None, condition_stmnt = None, condition=1): # condition_stmnt {"==": "eq", "!=": "ne", ">": "gt", "<": "lt", ">=": "ge", "<=": "le"}
-        self.connections[state] = (event, variable, condition_stmnt, condition)	
+        self.connections[event] = (state, variable, condition_stmnt, condition)	
 
 
 
@@ -169,7 +186,7 @@ class Variable():
 
 
 class PERMIT(Base_Function_Block):
-    def __init__(self, EI=None, PERMIT=None, name="PERMIT", **kwargs):
+    def __init__(self, EI=False, PERMIT=False, name="PERMIT", **kwargs):
         super().__init__(name, **kwargs)
 
         # ~ self.EI = Event(EI)
@@ -183,14 +200,14 @@ class PERMIT(Base_Function_Block):
         self.ecc = ECC(self)
         self.ecc.add_state("START", State("START"))
         self.ecc.add_state('EO', State('EO', ec_actions=[(None, None, "EO")]))
-        self.ecc.START.add_connection(self.ecc.EO, self.EI, self.PERMIT, 1)
+        self.ecc.START.add_connection(self.ecc.EO, self.EI, self.PERMIT, "==", 1)
         self.ecc.EO.add_connection(self.ecc.START, 1)
         self.ecc.set_current_state(self.ecc.START)
 
 
 #Contador
 class E_CTU(Base_Function_Block):
-    def __init__(self, PV=None, CU=None, R=None, Q=None, CV=None, name="E_CTU", **kwargs):
+    def __init__(self, PV=None, CU=False, R=False, Q=None, CV=0, name="E_CTU", **kwargs):
         super().__init__(name, **kwargs)
 
         self.add_event('CU', Event(self,CU, in_event=True))	
@@ -205,22 +222,21 @@ class E_CTU(Base_Function_Block):
         self.ecc = ECC(self)
         self.ecc.add_state("START", State("START"))
         self.ecc.add_state('CUO', State('CUO', ec_actions=[('Count', self.counter, 'CUO')]))
-        self.ecc.START.add_connection(self.ecc.CUO, self.CU, self.CV, self.PV)
-        self.ecc.add_state('RO', State('RO', ec_actions=[('Reset', self.reset, 'RUO')]))
+        self.ecc.START.add_connection(self.ecc.CUO, self.CU, self.CV,"<",6499)
+        self.ecc.add_state('RO', State('RO', ec_actions=[('Reset', self.reset, 'RO')]))
         self.ecc.START.add_connection(self.ecc.RO, self.R)
         self.ecc.RO.add_connection(self.ecc.START, 1)
         self.ecc.CUO.add_connection(self.ecc.START, 1)
         self.ecc.set_current_state(self.ecc.START)
 
     def reset(self):
-        RO = True
         self.CV.value = 0
         self.Q.value = 0
 
     def counter(self):
-        CUO = True
+        print(self.CV.value)
         self.CV.value += 1
-        if CV >= PV:
+        if self.CV.value >= self.PV.value:
             self.Q.value = 0
 
 class E_MERGE(Base_Function_Block):
@@ -239,7 +255,7 @@ class E_MERGE(Base_Function_Block):
 
 #Demultiplexação		
 class E_DEMUX(Base_Function_Block):
-    def __init__(self, EI=None, K=None, name='E_DEMUX', **kwargs):
+    def __init__(self, EI=False, K=None, name='E_DEMUX', **kwargs):
         super().__init__(name, **kwargs)
 
         self.add_event('EI', Event(self, EI, in_event=True))
@@ -262,10 +278,10 @@ class E_DEMUX(Base_Function_Block):
         self.ecc.START.add_connection(self.ecc.state, self.EI)
         self.ecc.START.add_connection(self.ecc.state, self.EI)
         self.ecc.START.add_connection(self.ecc.state, self.EI)
-        self.ecc.START.add_connection(self.ecc.EO0, 1, self.K, 0)
-        self.ecc.START.add_connection(self.ecc.EO1, 1, self.K, 1)
-        self.ecc.START.add_connection(self.ecc.EO2, 1, self.K, 2)
-        self.ecc.START.add_connection(self.ecc.EO3, 1, self.K, 3)
+        self.ecc.START.add_connection(self.ecc.EO0, 1, self.K, "==", 0)
+        self.ecc.START.add_connection(self.ecc.EO1, 1, self.K, "==", 1)
+        self.ecc.START.add_connection(self.ecc.EO2, 1, self.K, "==", 2)
+        self.ecc.START.add_connection(self.ecc.EO3, 1, self.K, "==", 3)
         self.EO0.add_connection(self.ecc.START, 1)
         self.EO1.add_connection(self.ecc.START, 1)
         self.EO2.add_connection(self.ecc.START, 1)
@@ -525,10 +541,11 @@ class world():
 
     def simple_run_through(self, i_fb):
         i_fb.run()
-        for event in i_fb.events.values():
+        for event in i_fb.events.items():
             if hasattr(i_fb, 'ecc'):
-                i_fb.ecc.run_ecc(event)
-            for i_event in event.connections:
+                i_fb.ecc.run_ecc(event[1])
+                #print(i_fb.name)
+            for i_event in event[1].connections:
                 self.simple_run_through(i_event.block)
 
     def execute(self, frequency, i_fb, duration=0):
@@ -540,7 +557,7 @@ class world():
                     break		
             if time.time() - cycler >= 1/frequency:
                 self.simple_run_through(i_fb)
-                self.function_block_states()
+                #self.function_block_states()
                 cycler = time.time()		
 
 

@@ -1,0 +1,26 @@
+<FBType Comment="Basic FB with empty ECC" Name="Basic">
+  <Identification Standard="61499-2" />
+  <VersionInfo Author="AZ" Date="2016-05-26" Organization="fortiss GmbH" Version="1.0" />
+  <InterfaceList>
+    <EventInputs>  
+    <Event Comment="" Name="CU" Type="Event" /><Event Comment="" Name="R" Type="Event" /></EventInputs>
+    <EventOutputs>
+    <Event Comment="" Name="CUO" Type="Event" /><Event Comment="" Name="RO" Type="Event" /></EventOutputs>
+    <InputVars>
+    <VarDeclaration Comment="" Name="PV" Type="INT" /></InputVars>
+    <OutputVars>
+    <VarDeclaration Comment="" Name="Q" Type="BOOL" /><VarDeclaration Comment="" Name="CV" Type="INT" /></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+	    <ECState Comment="" Name="RO">
+		    <ECAction Algorithm="Reset" Output="RO" />
+    </ECState>
+    <ECState Comment="" Name="CUO">
+	    <ECAction Algorithm="Count" Output="CUO" />
+	    </ECState>
+	    <ECState Comment="" Name="START" />
+    </ECC>
+    <Algorithm Comment="" Name="Reset" />
+    <Algorithm Comment="" Name="Count" /></BasicFB>
+</FBType>

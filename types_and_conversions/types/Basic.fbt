@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<!DOCTYPE FBType SYSTEM "http://www.holobloc.com/xml/LibraryElement.dtd">
+<FBType Comment="Basic FB with empty ECC" Name="Basic">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Author="AZ" Date="2016-05-26" Organization="fortiss GmbH" Version="1.0"/>
+  <InterfaceList>
+    <EventInputs>  
+    </EventInputs>
+    <EventOutputs>
+    </EventOutputs>
+    <InputVars>
+    </InputVars>
+    <OutputVars>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+    </ECC>
+  </BasicFB>
+</FBType>

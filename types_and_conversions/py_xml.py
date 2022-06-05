@@ -86,22 +86,36 @@ def convert_xml_basic_fb(xml):
 		transition_list = list()
 		transition = read.get("Condition")
 		if transition[0] == "[":
+			transition = transition.replace("[", "") 
+			transition = transition.replace("]", "") 
+			print(transition)
 			transition_list = transition.split()
-			transition.remove("]") 
-			transition.remove("[") 
-		elif transition[0] != 1:
+			transition_list.insert(0, "1") # [1, var, cond_stmnt, cond]
+			 
+		elif transition[0] != "1":
 			transition.replace("[", " ")
 			transition.replace("]", " ")
 			transition_list = transition.split()
+			print(transition_list)
 		else:
-			transition_list = [1]
+			transition_list = ["1"]
 						
 		transition_list.append(read.get("Destination"))
 		transition_list.append(read.get("Source"))
 		transitions.append(transition_list)
 		
 	for transition in transitions:
-		getattr(fb.ecc, transition[2]).add_connection(transition[1], transitions[0], )
+		print(transition)
+		if transition[0] == "1" and len(transition)==3:
+			getattr(fb.ecc, transition[2]).add_connection(getattr(fb.ecc, transition[1]), 1)
+		elif transition[0] == "1" and len(transition)>3:
+			getattr(fb.ecc, transition[5]).add_connection(getattr(fb.ecc, transition[4]), 1, getattr(fb, transition[1]), transition[2], transition[3])
+		
+		elif len(transition)>3:
+			getattr(fb.ecc, transition[5]).add_connection(getattr(fb.ecc, transition[4]), getattr(fb.ecc, transition[0]), getattr(fb, transition[1]), transition[2], transition[3])
+		else:
+			getattr(fb.ecc, transition[2]).add_connection(getattr(fb.ecc, transition[1]), getattr(fb, transition[0]))
+		
 		
 	return fb, transitions
 	

@@ -33,7 +33,7 @@ class ECC():
                             # ~ print(ec_action[1])
                         
 
-                elif con[2] == "==":
+                elif con[2] == "=":
                     if con[1].value == con[3]:
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -231,7 +231,7 @@ class PERMIT(Base_Function_Block):
         self.ecc = ECC(self)
         self.ecc.add_state("START", State("START"))
         self.ecc.add_state('EO', State('EO', ec_actions=[(None, None, "EO")]))
-        self.ecc.START.add_connection(self.ecc.EO, self.EI, self.PERMIT, "==", 1)
+        self.ecc.START.add_connection(self.ecc.EO, self.EI, self.PERMIT, "=", 1)
         self.ecc.EO.add_connection(self.ecc.START, 1)
         self.ecc.set_current_state(self.ecc.START)
         self.ecc.START.set_initial_state()
@@ -306,15 +306,15 @@ class E_DEMUX(Base_Function_Block):
         self.ecc.add_state('EO1', State('EI', ec_actions=[(None, None, "EO1")]))
         self.ecc.add_state('EO2', State('EI', ec_actions=[(None, None, "EO2")]))
         self.ecc.add_state('EO3', State('EI', ec_actions=[(None, None, "EO3")]))
-        self.ecc.add_state('state', State('State'))
+        self.ecc.add_state('State', State('State'))
         self.ecc.START.add_connection(self.ecc.state, self.EI)
         self.ecc.START.add_connection(self.ecc.state, self.EI)
         self.ecc.START.add_connection(self.ecc.state, self.EI)
         self.ecc.START.add_connection(self.ecc.state, self.EI)
-        self.ecc.START.add_connection(self.ecc.EO0, 1, self.K, "==", 0)
-        self.ecc.START.add_connection(self.ecc.EO1, 1, self.K, "==", 1)
-        self.ecc.START.add_connection(self.ecc.EO2, 1, self.K, "==", 2)
-        self.ecc.START.add_connection(self.ecc.EO3, 1, self.K, "==", 3)
+        self.ecc.State.add_connection(self.ecc.EO0, 1, self.K, "=", 0)
+        self.ecc.State.add_connection(self.ecc.EO1, 1, self.K, "=", 1)
+        self.ecc.State.add_connection(self.ecc.EO2, 1, self.K, "=", 2)
+        self.ecc.State.add_connection(self.ecc.EO3, 1, self.K, "=", 3)
         self.EO0.add_connection(self.ecc.START, 1)
         self.EO1.add_connection(self.ecc.START, 1)
         self.EO2.add_connection(self.ecc.START, 1)

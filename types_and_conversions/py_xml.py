@@ -93,8 +93,9 @@ def convert_xml_basic_fb(xml):
 			transition_list.insert(0, "1") # [1, var, cond_stmnt, cond]
 			 
 		elif transition[0] != "1":
-			transition.replace("[", " ")
-			transition.replace("]", " ")
+			transition = transition.replace("[", " ")
+			transition = transition.replace("]", " ")
+			print(transition)
 			transition_list = transition.split()
 			print(transition_list)
 		else:
@@ -116,8 +117,15 @@ def convert_xml_basic_fb(xml):
 		else:
 			getattr(fb.ecc, transition[2]).add_connection(getattr(fb.ecc, transition[1]), getattr(fb, transition[0]))
 		
+	algorithms = dict()
 		
-	return fb, transitions
+	for read in root.iter("Algorithm"):
+		alg = read[0].get("Text")
+		algorithms[read.get("Name")] = alg.split("\r\n") 
+	
+	
+		
+	return fb, algorithms
 	
 	
 		

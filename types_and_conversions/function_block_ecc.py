@@ -166,17 +166,38 @@ class Base_Function_Block():
         for var in self.variables.values():
             var.run()
 
-# ~ class ServiceInterface(Base_Function_Block):
-        # ~ def __init__(self, *args, **kwargs):
-                # ~ super().__init__(name, *args, **kwargs)
+class Service():
+        def __init__(self, interfaces=(None, None) *args, **kwargs):
+			self.interfaces = interfaces
+			self.service_sequences = list()
+		
+		def add_service_sequence(self, *service_transactions):
+			for ss in service_sequences:
+				self.service_transactions.append(st)
 
 
+class ServiceSequence():
+	def __init__(self, *args, **kwargs):
+		
+		self.service_transactions = list()
+		
+		def add_service_transaction(self, *service_transactions)			
+			for st in service_transactions:
+				self.service_transactions.append(st)
 
+class ServiceTransaction():
+	def __init__(self, input_primitive=None, output_primitive=None, *args, **kwargs):
+		self.input_primitive = input_primitive #(event, interface, parameters)
+		self.output_primitive = output_primitive #(event, interface, parameters)
+		
+		
+	
 class Event(): 
-    def __init__(self, block, active=False, in_event=False):
+    def __init__(self, block, active=False, in_event=False, with_vars = list()):
         self.block = block
         self.active = active
         self.connections = set()
+		self.with_vars = with_vars
         self.in_event = in_event
         self.selected = False
         self.selected_cn = False
@@ -221,7 +242,7 @@ class PERMIT(Base_Function_Block):
         super().__init__(name, **kwargs)
 
         # ~ self.EI = Event(EI)
-        self.add_event('EI', Event(self, EI, in_event=True))
+        self.add_event('EI', Event(self, EI, in_event=True, with_vars=["PERMIT"]))
         self.add_event('EO', Event(self))	
 
         self.add_variable('PERMIT', Variable(self, PERMIT, in_var=True))
@@ -242,10 +263,10 @@ class E_CTU(Base_Function_Block):
     def __init__(self, PV=None, CU=False, R=False, CV=0, Q=False,  name="E_CTU", **kwargs):
         super().__init__(name, **kwargs)
 
-        self.add_event('CU', Event(self,CU, in_event=True))	
+        self.add_event('CU', Event(self,CU, in_event=True, with_vars=["PV"]))	
         self.add_event('R', Event(self, R, in_event=True))
-        self.add_event('CUO', Event(self))
-        self.add_event('RO', Event(self))
+        self.add_event('CUO', Event(self, with_vars=["Q, CV"]))
+        self.add_event('RO', Event(self, with_vars=["Q, CV"]))
         self.add_variable('PV', Variable(self, PV, in_var=True, var_type="INT"))
         self.add_variable('Q', Variable(self, Q, var_type="BOOL"))
         self.add_variable('CV', Variable(self, CV, var_type="INT"))
@@ -273,25 +294,30 @@ class E_CTU(Base_Function_Block):
             self.Q.value = 1
 
 class E_MERGE(Base_Function_Block):
-    def __init__(self, name="E_MERGE", **kwargs):
+    def __init__(self, name="E_MERGE", EI1=False, EI2=False**kwargs):
         super().__init__(name, **kwargs)		
 
+        self.add_event("EI1", Event(self, EI1, in_event=True))
+        self.add_event("EI2", Event(self, EI2, in_event=True))
         self.add_event("EO", Event(self))
         self.type = "Basic"
+		
+		self.ecc = ECC(self)
+		self.ecc.add_state("START", State("START"))
+		self.ecc.add_state("EO", State("EO", ec_actions=[(None, None, 'EO')]))
+		self.ecc.START.add_connection(self.ecc.EO, self.EI1)
+		self.ecc.START.add_connection(self.ecc.EO, self.EI2)
+		self.ecc.EO.add_connection(self.ecc.START, 1)
+		self.ecc.set_current_state(self.ecc.START)
+		self.ecc.START.set_initial_state()
 
-    def algorithm(self):
-        for event in vars(self).values():
-            if event.active == True:
-                self.EO = True
-            else:
-                self.EO = False 
 
 #Demultiplexação		
 class E_DEMUX(Base_Function_Block):
     def __init__(self, EI=False, K=None, name='E_DEMUX', **kwargs):
         super().__init__(name, **kwargs)
 
-        self.add_event('EI', Event(self, EI, in_event=True))
+        self.add_event('EI', Event(self, EI, in_event=True, with_vars=["K"]))
         self.add_event('EO0', Event(self))				
         self.add_event('EO1', Event(self))
         self.add_event('EO2', Event(self))

@@ -56,14 +56,33 @@ def convert_xml_basic_fb(xml):
 	fb = Base_Function_Block(name=name_xml)
 	fb.type = "Basic"
 	fb.ecc = ECC(fb)
+	
 	for read in root.iter("EventInputs"):
-		for read in root.iter("Event"):	
-			fb.add_event(read.get("Name"), Event(fb, None, in_event=True))
-	# With variable statement missing!!!
+		for read_1 in read.iter("Event"):	
+			event_name = read_1.get("Name")
+			print(event_name)
+			fb.add_event(event_name, Event(fb, None, in_event=True))
+			# ~ print(getattr(fb, read_1.get("Name")).with_vars)
+			# ~ print("hi")
+			getattr(fb, event_name).with_vars = list()
+			for read_2 in read_1.iter("With"):
+				getattr(fb, read_1.get("Name")).with_vars.append(read_2.get("Var"))
+				print(getattr(fb, read_1.get("Name")).with_vars)
+				print(read_2.get("Var"))
+				
 	for read in root.iter("EventOutputs"):
-		for read in root.iter("Event"):
-			fb.add_event(read.get("Name"), Event(fb))
-
+		for read_1 in read.iter("Event"):	
+			event_name = read_1.get("Name")
+			print(event_name)
+			fb.add_event(event_name, Event(fb, None, in_event=False))
+			# ~ print(getattr(fb, read_1.get("Name")).with_vars)
+			# ~ print("hi")
+			getattr(fb, event_name).with_vars = list()
+			for read_2 in read_1.iter("With"):
+				getattr(fb, read_1.get("Name")).with_vars.append(read_2.get("Var"))
+				print(getattr(fb, read_1.get("Name")).with_vars)
+				print(read_2.get("Var"))
+			
 	for read in root.iter("InputVars"):
 		for read in root.iter("VarDeclaration"):	
 			fb.add_variable(read.get("Name"), Variable(fb, None, in_var=True))
@@ -72,15 +91,10 @@ def convert_xml_basic_fb(xml):
 			fb.add_variable(read.get("Name"), Variable(fb))
 	for read in root.iter("ECState"):
 		fb.ecc.add_state(read.get("Name"), State(read.get("Name")))
-		i = 0
-		while i>=0:
-			print(i)
-			try:
-				getattr(fb.ecc, read.get("Name")).ec_actions=((read[i].get("Algorithm"), None, read[i].get("Output")))
-				i = i+1
-# This does NOT handle cases where there are multiple ec_actions, I think... 				
-			except:
-				break
+		getattr(fb.ecc, read.get("Name")).ec_actions = list()
+		for read_2 in read.iter("ECAction"):
+			getattr(fb.ecc, read.get("Name")).ec_actions.append((read_2.get("Algorithm"), None, read_2.get("Output")))
+			
 	transitions = list()
 	for read in root.iter("ECTransition"):
 		transition_list = list()
@@ -88,16 +102,13 @@ def convert_xml_basic_fb(xml):
 		if transition[0] == "[":
 			transition = transition.replace("[", "") 
 			transition = transition.replace("]", "") 
-			print(transition)
 			transition_list = transition.split()
 			transition_list.insert(0, "1") # [1, var, cond_stmnt, cond]
 			 
 		elif transition[0] != "1":
 			transition = transition.replace("[", " ")
 			transition = transition.replace("]", " ")
-			print(transition)
 			transition_list = transition.split()
-			print(transition_list)
 		else:
 			transition_list = ["1"]
 						
@@ -106,7 +117,6 @@ def convert_xml_basic_fb(xml):
 		transitions.append(transition_list)
 		
 	for transition in transitions:
-		print(transition)
 		if transition[0] == "1" and len(transition)==3:
 			getattr(fb.ecc, transition[2]).add_connection(getattr(fb.ecc, transition[1]), 1)
 		elif transition[0] == "1" and len(transition)>3:
@@ -122,14 +132,22 @@ def convert_xml_basic_fb(xml):
 	for read in root.iter("Algorithm"):
 		alg = read[0].get("Text")
 		algorithms[read.get("Name")] = alg.split("\r\n") 
-	
+	new = dict()
+	for element in algorithms.items():
+		elmnt = list()
+		for alg in element[1]:
+			elmnt.append(alg.replace(";", ""))
+		new[element[0]] = elmnt
+	algorithms = new
 	
 		
 	return fb, algorithms
 	
 	
 		
-PERM = PERMIT(EI=False, PERMIT=True)
-COUNT = E_CTU()
+# ~ PERM = PERMIT(EI=False, PERMIT=True)
+# ~ COUNT = E_CTU()
 # ~ convert_basic_fb_xml(COUNT)
-# ~ convert_xml_basic_fb("types/E_DEMUX.fbt")
+rb = convert_xml_basic_fb("types/E_CTU.fbt")
+print(getattr(rb[0].ecc, "CU").ec_actions)
+

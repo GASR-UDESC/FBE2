@@ -31,7 +31,7 @@ class ECC():
                         if ec_action[1] is not None:
                             ec_action[1]()
                             # ~ print(ec_action[1])
-                        
+
 
                 elif con[2] == "=":
                     if con[1].value == con[3]:
@@ -99,14 +99,14 @@ class ECC():
                 print(self.fb.RO.active)
             except:
                 pass
-				
+
             self.run_ecc(event)
 
         else:
             print("Stopped at " + self.current_state.name +" FB: "+ self.fb.name)
 
 class State():
-    def __init__(self, name, ec_actions=None, *args, **kwargs): # ec_actions is a list, ec_action is (algorithm_name, algorithm, output)
+    def __init__(self, name, ec_actions=list(), *args, **kwargs): # ec_actions is a list, ec_action is (algorithm_name, algorithm, output)
         self.connections = dict() # connections are EVENT:(STATE, VARIABLE, CONDITION_STATEMENT, CONDITION) this is where "With" statement comes in  
         self.name = name
         self.ec_actions = ec_actions
@@ -116,7 +116,7 @@ class State():
         if event not in self.connections.keys():
             self.connections[event] = list()
         self.connections[event].append((state, variable, condition_stmnt, condition))	
-   
+
     def set_initial_state(self):
         setattr(self, "is_initial", True)
 
@@ -140,7 +140,8 @@ class Base_Function_Block():
     def add_event(self, name, event):
         self.events[name] = event
         setattr(self, name, event)
-
+        print("Event Added")
+		
     def add_variable(self, name, variable):
         self.variables[name] = variable
         setattr(self, name, variable)
@@ -167,41 +168,41 @@ class Base_Function_Block():
             var.run()
 
 class Service():
-        def __init__(self, interfaces=(None, None) *args, **kwargs):
-			self.interfaces = interfaces
-			self.service_sequences = list()
-		
-		def add_service_sequence(self, *service_transactions):
-			for ss in service_sequences:
-				self.service_transactions.append(st)
+    def __init__(self, interfaces=(None, None), *args, **kwargs):
+        self.interfaces = interfaces
+        self.service_sequences = list()
+
+    def add_service_sequence(self, *service_transactions):
+        for ss in service_sequences:
+            self.service_transactions.append(st)
 
 
 class ServiceSequence():
-	def __init__(self, *args, **kwargs):
-		
-		self.service_transactions = list()
-		
-		def add_service_transaction(self, *service_transactions)			
-			for st in service_transactions:
-				self.service_transactions.append(st)
+    def __init__(self, *args, **kwargs):
+        self.service_transactions = list()
+
+    def add_service_transaction(self, *service_transactions):			
+        for st in service_transactions:
+            self.service_transactions.append(st)
 
 class ServiceTransaction():
-	def __init__(self, input_primitive=None, output_primitive=None, *args, **kwargs):
-		self.input_primitive = input_primitive #(event, interface, parameters)
-		self.output_primitive = output_primitive #(event, interface, parameters)
-		
-		
-	
+    def __init__(self, input_primitive=None, output_primitive=None, *args, **kwargs):
+        self.input_primitive = input_primitive #(event, interface, parameters)
+        self.output_primitive = output_primitive #(event, interface, parameters)
+
+
+
 class Event(): 
     def __init__(self, block, active=False, in_event=False, with_vars = list()):
         self.block = block
         self.active = active
         self.connections = set()
-		self.with_vars = with_vars
+        self.with_vars = with_vars
         self.in_event = in_event
         self.selected = False
         self.selected_cn = False
         self.pos = [0,0]
+        
 
     def activate(self, active=False):
         self.active = active
@@ -294,22 +295,22 @@ class E_CTU(Base_Function_Block):
             self.Q.value = 1
 
 class E_MERGE(Base_Function_Block):
-    def __init__(self, name="E_MERGE", EI1=False, EI2=False**kwargs):
+    def __init__(self, name="E_MERGE", EI1=False, EI2=False, **kwargs):
         super().__init__(name, **kwargs)		
 
         self.add_event("EI1", Event(self, EI1, in_event=True))
         self.add_event("EI2", Event(self, EI2, in_event=True))
         self.add_event("EO", Event(self))
         self.type = "Basic"
-		
-		self.ecc = ECC(self)
-		self.ecc.add_state("START", State("START"))
-		self.ecc.add_state("EO", State("EO", ec_actions=[(None, None, 'EO')]))
-		self.ecc.START.add_connection(self.ecc.EO, self.EI1)
-		self.ecc.START.add_connection(self.ecc.EO, self.EI2)
-		self.ecc.EO.add_connection(self.ecc.START, 1)
-		self.ecc.set_current_state(self.ecc.START)
-		self.ecc.START.set_initial_state()
+
+        self.ecc = ECC(self)
+        self.ecc.add_state("START", State("START"))
+        self.ecc.add_state("EO", State("EO", ec_actions=[(None, None, 'EO')]))
+        self.ecc.START.add_connection(self.ecc.EO, self.EI1)
+        self.ecc.START.add_connection(self.ecc.EO, self.EI2)
+        self.ecc.EO.add_connection(self.ecc.START, 1)
+        self.ecc.set_current_state(self.ecc.START)
+        self.ecc.START.set_initial_state()
 
 
 #Demultiplexação		
@@ -347,7 +348,7 @@ class E_DEMUX(Base_Function_Block):
         self.EO3.add_connection(self.ecc.START, 1)
         self.ecc.set_current_state(self.ecc.START)
         self.ecc.START.set_initial_state()
-		
+
 
 class E_DELAY(Base_Function_Block):
     def __init__(self, START=False, STOP=False, DT=1, name='E_DELAY', **kwargs):

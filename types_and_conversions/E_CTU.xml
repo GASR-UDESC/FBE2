@@ -7,20 +7,12 @@
     <EventOutputs>
     <Event Comment="" Name="CUO" Type="Event" /><Event Comment="" Name="RO" Type="Event" /></EventOutputs>
     <InputVars>
-    <VarDeclaration Comment="" Name="PV" Type="INT" /></InputVars>
+    </InputVars>
     <OutputVars>
-    <VarDeclaration Comment="" Name="Q" Type="BOOL" /><VarDeclaration Comment="" Name="CV" Type="INT" /></OutputVars>
+    <VarDeclaration Comment="" Name="PV" Type="BOOL" /><VarDeclaration Comment="" Name="Q" Type="BOOL" /><VarDeclaration Comment="" Name="CV" Type="BOOL" /></OutputVars>
   </InterfaceList>
   <BasicFB>
     <ECC>
-	    <ECState Comment="" Name="RO">
-		    <ECAction Algorithm="Reset" Output="RO" />
-    </ECState>
-    <ECState Comment="" Name="CUO">
-	    <ECAction Algorithm="Count" Output="CUO" />
-	    </ECState>
-	    <ECState Comment="" Name="START" />
-    </ECC>
-    <Algorithm Comment="" Name="Reset" />
-    <Algorithm Comment="" Name="Count" /></BasicFB>
+    <ECState Comment="" Name="START" /><ECState Comment="" Name="R"><ECAction Algorithm="R" Output="RO" /></ECState><ECState Comment="" Name="CU"><ECAction Algorithm="CU" Output="CUO" /></ECState><ECTransition Comment="" Condition="CU[CV &lt; 65535]" Destination="CU" Source="START" /><ECTransition Comment="" Condition="R" Destination="R" Source="START" /><ECTransition Comment="" Condition="1" Destination="START" Source="R" /><ECTransition Comment="" Condition="1" Destination="START" Source="CU" /></ECC>
+  <Algorithm Comment="" Name="R"><ST Text="CV := 0;&#10;Q := FALSE;" /></Algorithm><Algorithm Comment="" Name="CU"><ST Text="CV := CV + 1;&#10;Q  := (CV &gt;= PV);" /></Algorithm></BasicFB>
 </FBType>

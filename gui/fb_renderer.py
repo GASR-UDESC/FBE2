@@ -108,6 +108,7 @@ class Function_Block_Renderer(Gtk.DrawingArea):
                     cr.stroke()
 
             for event in fb.events.items():
+                # ~ print(event[1].connections)
                 for connection in event[1].connections:
                     if self.selected_cn == (event[1], connection):
                         cr.set_source_rgb(1,0,0)

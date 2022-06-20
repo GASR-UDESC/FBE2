@@ -126,6 +126,7 @@ class Base_Function_Block():
     def __init__(self, name="NEW_FB", **kwargs):
         self.events = dict()
         self.variables = dict() 
+        self.algorithm = dict()
         self.name = name
         self.selected = False
         self.pos = [0,0]
@@ -284,15 +285,7 @@ class E_CTU(Base_Function_Block):
         self.ecc.set_current_state(self.ecc.START)
         self.ecc.START.set_initial_state()
 
-    def reset(self):
-        self.CV.value = 0
-        self.Q.value = 0
-
-    def counter(self): 
-        self.CV.value += 1
-        print("I ran, CV=" + str(self.CV.value))
-        if self.CV.value >= self.PV.value:
-            self.Q.value = 1
+        self.algorithm = {"R": "CV := 0;&#13;&#10;Q := FALSE;", "CU": "CV := CV + 1;&#13;&#10;Q  := (CV &gt;= PV);"}
 
 class E_MERGE(Base_Function_Block):
     def __init__(self, name="E_MERGE", EI1=False, EI2=False, **kwargs):
@@ -566,10 +559,10 @@ class world():
 
     def connect_events(self, in_event, out_event):
         if type(in_event) is not Event or type(out_event) is not Event:
-            pass
+            print("Not event type, dummy")
         else:
             if (in_event.in_event and out_event.in_event) or (in_event.in_event != True and out_event.in_event != True):
-                pass
+                print("in_event with in_event or out_event with out_event")
             else:
                 if in_event.in_event:
                     _in_event = in_event
@@ -581,10 +574,10 @@ class world():
 
     def connect_variables(self, in_var, out_var):
         if type(in_var) is not Variable or type(out_var) is not Variable:
-            pass
+            print("Not variable type, dummy")
         else:
             if (in_var.in_var and out_var.in_var) or (in_var.in_var != True and out_var.in_var != True):
-                pass
+                print("in_var with in_var or out_var with out_var, dummy")
             else:		
                 if in_var.in_var:
                     _in_var = in_var

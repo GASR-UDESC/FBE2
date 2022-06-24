@@ -1,14 +1,15 @@
 #!/usr/bin/python3
 
 import xml.etree.ElementTree as ET
-from function_block.function_block import *
+from function_block_ecc import *
+
 
 
 def convert_basic_fb_xml(fb):
     tree = ET.parse("types/Basic.fbt")
     root = tree.getroot()
     for read in root.iter("FBType"):
-        read.set("Name", fb.type)
+        read.set("Name", fb.name)
     for read in root.iter("EventInputs"):
         for event in fb.events.items():
             if event[1].in_event:
@@ -89,9 +90,10 @@ def import_diagram(xml):
         diagram_name = read.get("Name")
 
     for read in root.iter("FB"):
-        fb = convert_xml_basic_fb("types_and_conversions/types/"+read.get("Type")+".fbt")
+        fb = convert_xml_basic_fb("types/"+read.get("Type")+".fbt")
+        fb.type = read.get("Type")
+        fb.name = read.get("Name")
         setattr(fb_diagram, read.get("Name"), fb)
-        fb.pos = [float(read.get("x")), float(read.get("y"))]
         fb_diagram.add_function_block(fb) 
 
     for read in root.iter("EventConnections"):
@@ -109,7 +111,7 @@ def import_diagram(xml):
 
 def export_diagram(diagram, directory):
 	diagram_name = "nameless"
-	tree = ET.parse("types_and_conversions/model_diagram.sys")
+	tree = ET.parse("model_diagram.sys")
 	root = tree.getroot()
 	
 	for read in root.iter("System"):
@@ -118,7 +120,7 @@ def export_diagram(diagram, directory):
 		read.set("Name", diagram_name + "App")
 	for read in root.iter("SubAppNetwork"):
 		for fb in diagram.function_blocks:
-			ET.SubElement(read, "FB", {"Name": fb.name, "Type": fb.type, "Comment": "", "x": str(fb.pos[0]), "y": str(fb.pos[1])})
+			ET.SubElement(read, "FB", {"Name": fb.name, "Type": "", "Comment": "", "x": str(fb.pos[0]), "y": str(fb.pos[1])})
 			for var in fb.variables.items():
 				for read_2 in root.iter("FB"):
 					if read_2.get("Name") == fb.name and var[1].value is not None:
@@ -150,9 +152,8 @@ def convert_xml_basic_fb(xml):
     for read in root.iter("FBType"):
         name_xml = read.get("Name")
         fb = Base_Function_Block(name=name_xml)
-        fb.type = read.get("Name")
+        fb.type = "Basic"
         fb.ecc = ECC(fb)
-        
 
     for read in root.iter("EventInputs"):
         for read_1 in read.iter("Event"):	

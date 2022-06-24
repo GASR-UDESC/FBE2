@@ -10,9 +10,9 @@ from function_block.function_block import *
 
 
 class Function_Block_Renderer(Gtk.DrawingArea):
-    def __init__(self, fb_diagram=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fb_diagram = fb_diagram
+        self.fb_diagram = world()
         self.selected_cn = None
 
     def draw_function_block(self, wid, cr, fb, gain):

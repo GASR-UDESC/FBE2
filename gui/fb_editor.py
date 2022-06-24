@@ -18,17 +18,18 @@ class Function_Block_Editor(Gtk.Box):
         super().__init__(*args, **kwargs)
 
         self.ref_pos = [0,0]
+        self.fb_count = 0
         self.enable_add = False
         self.enable_remove =False
         self.enable_connect = False
         self.previous_selected = None
         self.selected_fb = None
-        self.fb_diagram = world()
+        # ~ fb_diagram = world()
         self.paned = Gtk.Paned(wide_handle=True)
         self.scrolled = Gtk.ScrolledWindow.new()
         self.scrolled.set_hexpand(True)
         self.scrolled.set_vexpand(True)
-        self.function_block_renderer = Function_Block_Renderer(self.fb_diagram)
+        self.function_block_renderer = Function_Block_Renderer()
         self.sidebox = Gtk.Box(orientation = Gtk.Orientation.VERTICAL)
         self.frame_props = Gtk.Frame(label='Properties', visible=False, no_show_all=True)
         self.pack_start(self.paned, True, True, 0)
@@ -45,7 +46,7 @@ class Function_Block_Editor(Gtk.Box):
         self.selected_fb = fb
 
     def on_draw(self, wid, cr):
-        for fb in self.fb_diagram.function_blocks:
+        for fb in self.function_block_renderer.fb_diagram.function_blocks:
             self.function_block_renderer.draw_function_block(wid, cr, fb, gain=20)
         self.function_block_renderer.draw_connections(wid, cr)
 
@@ -54,9 +55,12 @@ class Function_Block_Editor(Gtk.Box):
         if e.type == Gdk.EventType.BUTTON_PRESS \
                 and e.button == MouseButtons.LEFT_BUTTON:
                     if self.enable_add:
-                        self.fb_diagram.new_function_block("fb" + str(len(self.fb_diagram.function_blocks)), self.selected_fb)
-                        getattr(self.fb_diagram, "fb" + str(len(self.fb_diagram.function_blocks)-1)).pos = [e.x, e.y]  
-
+                        try:
+                            self.function_block_renderer.fb_diagram.new_function_block("fb" + str(len(self.function_block_renderer.fb_diagram.function_blocks)), self.selected_fb)
+                            getattr(self.function_block_renderer.fb_diagram, "fb" + str(len(self.function_block_renderer.fb_diagram.function_blocks)-1)).pos = [e.x, e.y]  
+                            self.fb_count = self.fb_count + 1
+                        except:
+                            pass
                     else:
                         self.selected_fb, selected_event, selected_var  = self.function_block_renderer.detect_fb(e.x, e.y)
                         self.edit_fb_window.refresh(self.selected_fb)
@@ -65,7 +69,8 @@ class Function_Block_Editor(Gtk.Box):
                         self.ref_pos = [e.x, e.y]
                         if self.enable_remove:
                             if self.selected_fb is not None:
-                                self.fb_diagram.remove_function_block(self.selected_fb)
+                                self.function_block_renderer.fb_diagram.remove_function_block(self.selected_fb)
+                                self.fb_count = self.fb_count - 1
                             if self.function_block_renderer.selected_cn is not None:
                                 self.function_block_renderer.selected_cn[0].connections.remove(self.function_block_renderer.selected_cn[1])
                         elif self.enable_connect:
@@ -76,10 +81,10 @@ class Function_Block_Editor(Gtk.Box):
                                     self.previous_selected = selected_event
                             else:
                                 if selected_event is not None:
-                                    self.fb_diagram.connect_events(self.previous_selected, selected_event)
+                                    self.function_block_renderer.fb_diagram.connect_events(self.previous_selected, selected_event)
                                     self.previous_selected = None
                                 else:
-                                    self.fb_diagram.connect_variables(self.previous_selected, selected_var)
+                                    self.function_block_renderer.fb_diagram.connect_variables(self.previous_selected, selected_var)
                                     self.previous_selected = None
 
 

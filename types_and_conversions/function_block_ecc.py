@@ -276,9 +276,9 @@ class E_CTU(Base_Function_Block):
 
         self.ecc = ECC(self)
         self.ecc.add_state("START", State("START"))
-        self.ecc.add_state('CUO', State('CUO', ec_actions=[('Count', self.counter, 'CUO')]))
+        self.ecc.add_state('CUO', State('CUO', ec_actions=[('CU', None, 'CUO')]))
         self.ecc.START.add_connection(self.ecc.CUO, self.CU, self.CV,"<",6499)
-        self.ecc.add_state('RO', State('RO', ec_actions=[('Reset', self.reset, 'RO')]))
+        self.ecc.add_state('RO', State('RO', ec_actions=[('R', None, 'RO')]))
         self.ecc.START.add_connection(self.ecc.RO, self.R)
         self.ecc.RO.add_connection(self.ecc.START, 1)
         self.ecc.CUO.add_connection(self.ecc.START, 1)

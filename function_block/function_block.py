@@ -171,11 +171,11 @@ class Base_Function_Block():
 class Service():
     def __init__(self, interfaces=(None, None), *args, **kwargs):
         self.interfaces = interfaces
-        self.service_sequences = list()
+        self.service_sequences = dict()
 
-    def add_service_sequence(self, *service_transactions):
+    def add_service_sequence(self, *service_sequences):
         for ss in service_sequences:
-            self.service_transactions.append(st)
+            self.service_sequences[ss[0]] = ss[1]
 
 
 class ServiceSequence():
@@ -185,6 +185,7 @@ class ServiceSequence():
     def add_service_transaction(self, *service_transactions):			
         for st in service_transactions:
             self.service_transactions.append(st)
+
 
 class ServiceTransaction():
     def __init__(self, input_primitive=None, output_primitive=None, *args, **kwargs):

@@ -6,7 +6,11 @@ from function_block_ecc import *
 
 
 def convert_basic_fb_xml(fb):
-    tree = ET.parse("types/Basic.fbt")
+    if getattr(fb, "ecc").states == set():
+        tree = ET.parse("types/templates/ServiceInterface.fbt")
+    else:
+        tree = ET.parse("types/templates/Basic.fbt")
+		
     root = tree.getroot()
     for read in root.iter("FBType"):
         read.set("Name", fb.name)
@@ -67,7 +71,7 @@ def convert_basic_fb_xml(fb):
                             var_name = list(fb.variables.keys())[list(fb.variables.values()).index(con[1][0][1])]
                             ET.SubElement(read, "ECTransition", {"Comment": "", "Condition": event_name + "[" + var_name + " " + con[1][0][2] + " " + str(con[1][0][3]) + "]", "Destination": con[1][0][0].name, "Source": state.name})
 
-
+	
 
 
     for read in root.iter("BasicFB"):
@@ -79,6 +83,34 @@ def convert_basic_fb_xml(fb):
                         for read_2 in read.iter("Algorithm"):
                             if read_2.get("Name") == alg[0]:
                                 ET.SubElement(read_2, "ST", {"Text": fb.algorithm[alg[0]]})
+  
+    for read in root.iter("Service"):
+        read.set("LeftInterface", fb.service.interfaces[0])
+        read.set("RightInterface", fb.service.interfaces[1])
+        
+        for ss in fb.service.service_sequences.items():
+            ET.SubElement(read, "ServiceSequence", {"Comment": "", "Name": ss[0]})	
+        for ss in read.iter("ServiceSequence"):
+            for service_sequence in fb.service.service_sequences.items():
+                if service_sequence[0] == ss.get("Name"):
+                    for st in service_sequence[1].service_transactions:
+                        ET.SubElement(ss, "ServiceTransaction")
+                    i = 0	
+                    for st in ss.iter("ServiceTransaction"):
+                        input_primitive = service_sequence[1].service_transactions[i].input_primitive
+                        output_primitive = service_sequence[1].service_transactions[i].output_primitive
+                        if input_primitive[2] != None:
+                            ET.SubElement(st, "InputPrimitive", {"Event": input_primitive[0], "Interface": input_primitive[1], "Parameters": input_primitive[2]})
+                        else:
+                            ET.SubElement(st, "InputPrimitive", {"Event": input_primitive[0], "Interface": input_primitive[1]})
+                        if output_primitive[2] != None:
+                            ET.SubElement(st, "OutputPrimitive", {"Event": output_primitive[0], "Interface": output_primitive[1], "Parameters": output_primitive[2]})
+                        else: 
+                            ET.SubElement(st, "OutputPrimitive", {"Event": output_primitive[0], "Interface": output_primitive[1]})
+                        
+                        i = i + 1
+                            
+				
     tree.write(fb.name+".xml")
 
 def import_diagram(xml):
@@ -227,6 +259,22 @@ def convert_xml_basic_fb(xml):
         alg = read[0].get("Text")
         fb.algorithm[read.get("Name")] = alg
 
+    for read in root.iter("Service"):
+        fb.service = Service(interfaces=(read.get("LeftInterface"), read.get("RightInterface")))
+        for ss in read.iter("ServiceSequence"):
+            service_sequence = ServiceSequence()
+            
+            for st in ss.iter("ServiceTransaction"):
+                service_transaction = ServiceTransaction()
+                
+                for ip in st.iter("InputPrimitive"):
+                    service_transaction.input_primitive = (ip.get("Event"), ip.get("Interface"), ip.get("Parameters"))
+                
+                for ip in st.iter("OutputPrimitive"):
+                    service_transaction.output_primitive = (ip.get("Event"), ip.get("Interface"), ip.get("Parameters"))
+                service_sequence.add_service_transaction(service_transaction)
+
+            fb.service.add_service_sequence((ss.get("Name"), service_sequence))
     return fb
 
 def strip_algorithm(alg):

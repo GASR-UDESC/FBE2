@@ -4,9 +4,9 @@
 	<Application Name="namelessApp" Comment="">
 		<SubAppNetwork>
 			<EventConnections>
-			<Connection Source="E_PERMIT.EO" Destination="E_CTU.CU" Comment="" dx1="" /><Connection Source="E_RESTART.WARM" Destination="E_PERMIT.EI" Comment="" dx1="" /></EventConnections>
+			<Connection Source="E_RESTART.WARM" Destination="E_PERMIT.EI" Comment="" dx1="" /><Connection Source="E_PERMIT.EO" Destination="E_SPLIT.EI" Comment="" dx1="" /><Connection Source="E_SPLIT.EO1" Destination="E_PERMIT_2.EI" Comment="" dx1="" /><Connection Source="E_SPLIT.EO2" Destination="E_PERMIT_1.EI" Comment="" dx1="" /></EventConnections>
 			<DataConnections>
-			<Connection Source="E_CTU.PV" Destination="E_PERMIT.PERMIT" Comment="" dx1="" /></DataConnections>
-		<FB Name="E_PERMIT" Type="E_PERMIT" Comment="" x="210.6506805419922" y="76.58297729492188"><Parameter Name="PERMIT" Value="None" /></FB><FB Name="E_CTU" Type="E_CTU" Comment="" x="349.9246826171875" y="200.11331176757812"><Parameter Name="PV" Value="None" /><Parameter Name="Q" Value="None" /><Parameter Name="CV" Value="None" /></FB><FB Name="E_RESTART" Type="E_RESTART" Comment="" x="56.34767150878906" y="101.531494140625" /></SubAppNetwork>
+			</DataConnections>
+		<FB Name="E_PERMIT_1" Type="E_PERMIT" Comment="" x="383.50697326660156" y="377.2655487060547"><Parameter Name="PERMIT" Value="None" /></FB><FB Name="E_RESTART" Type="E_RESTART" Comment="" x="89.82618713378906" y="276.5303039550781" /><FB Name="E_PERMIT_2" Type="E_PERMIT" Comment="" x="392.8611755371094" y="203.2889404296875"><Parameter Name="PERMIT" Value="None" /></FB><FB Name="E_PERMIT" Type="E_PERMIT" Comment="" x="191.34719848632812" y="158.7705841064453"><Parameter Name="PERMIT" Value="None" /></FB><FB Name="E_SPLIT" Type="E_SPLIT" Comment="" x="287.3929443359375" y="246.58023071289062" /></SubAppNetwork>
 	</Application>
 </System>

@@ -122,6 +122,7 @@ def import_diagram(xml):
 
     for read in root.iter("FB"):
         fb = convert_xml_basic_fb("types_and_conversions/types/"+read.get("Type")+".fbt")
+        fb.name = read.get("Name")
         setattr(fb_diagram, read.get("Name"), fb)
         fb.pos = [float(read.get("x")), float(read.get("y"))]
         fb_diagram.add_function_block(fb) 
@@ -141,7 +142,7 @@ def import_diagram(xml):
 
 def export_diagram(diagram, directory):
 	diagram_name = "nameless"
-	tree = ET.parse("types_and_conversions/model_diagram.sys")
+	tree = ET.parse("types_and_conversions/types/templates/model_diagram.sys")
 	root = tree.getroot()
 	
 	for read in root.iter("System"):
@@ -207,11 +208,12 @@ def convert_xml_basic_fb(xml):
                 print(read_2.get("Var"))
 
     for read in root.iter("InputVars"):
-        for read in root.iter("VarDeclaration"):	
-            fb.add_variable(read.get("Name"), Variable(fb, None, in_var=True))
+        for read_1 in read.iter("VarDeclaration"):	
+            fb.add_variable(read_1.get("Name"), Variable(fb, None, in_var=True))
     for read in root.iter("OutputVars"):
-        for read in root.iter("VarDeclaration"):
-            fb.add_variable(read.get("Name"), Variable(fb))
+        for read_1 in read.iter("VarDeclaration"):
+            print("bam")
+            fb.add_variable(read_1.get("Name"), Variable(fb))
     for read in root.iter("ECState"):
         fb.ecc.add_state(read.get("Name"), State(read.get("Name")))
         getattr(fb.ecc, read.get("Name")).ec_actions = list()
@@ -258,20 +260,20 @@ def convert_xml_basic_fb(xml):
         alg = read[0].get("Text")
         fb.algorithm[read.get("Name")] = alg
 	
-	for read in root.iter("Service"):
-            fb.service = Service(interfaces=(read.get("LeftInterface"), read.get("RightInterface")))
-            for ss in read.iter("ServiceSequence"):
-                service_sequence = ServiceSequence()
+    for read in root.iter("Service"):
+        fb.service = Service(interfaces=(read.get("LeftInterface"), read.get("RightInterface")))
+        for ss in read.iter("ServiceSequence"):
+            service_sequence = ServiceSequence()
+            
+            for st in ss.iter("ServiceTransaction"):
+                service_transaction = ServiceTransaction()
                 
-                for st in ss.iter("ServiceTransaction"):
-                    service_transaction = ServiceTransaction()
-                    
-                    for ip in st.iter("InputPrimitive"):
-                        service_transaction.input_primitive = (ip.get("Event"), ip.get("Interface"), ip.get("Parameters"))
-                    
-                    for ip in st.iter("OutputPrimitive"):
-                        service_transaction.output_primitive = (ip.get("Event"), ip.get("Interface"), ip.get("Parameters"))
-                fb.service.add_service_sequence((ss.get("Name"), service_sequence))
+                for ip in st.iter("InputPrimitive"):
+                    service_transaction.input_primitive = (ip.get("Event"), ip.get("Interface"), ip.get("Parameters"))
+                
+                for ip in st.iter("OutputPrimitive"):
+                    service_transaction.output_primitive = (ip.get("Event"), ip.get("Interface"), ip.get("Parameters"))
+            fb.service.add_service_sequence((ss.get("Name"), service_sequence))
 
     return fb
 

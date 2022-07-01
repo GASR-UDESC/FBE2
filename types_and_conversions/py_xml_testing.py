@@ -143,7 +143,7 @@ def import_diagram(xml):
 
 def export_diagram(diagram, directory):
 	diagram_name = "nameless"
-	tree = ET.parse("model_diagram.sys")
+	tree = ET.parse("types/templates/model_diagram.sys")
 	root = tree.getroot()
 	
 	for read in root.iter("System"):
@@ -208,11 +208,14 @@ def convert_xml_basic_fb(xml):
                 print(read_2.get("Var"))
 
     for read in root.iter("InputVars"):
-        for read in root.iter("VarDeclaration"):	
-            fb.add_variable(read.get("Name"), Variable(fb, None, in_var=True))
+        print("this is good")
+        for read_1 in read.iter("VarDeclaration"):	
+            print("came here")
+            fb.add_variable(read_1.get("Name"), Variable(fb, None, in_var=True))
     for read in root.iter("OutputVars"):
-        for read in root.iter("VarDeclaration"):
-            fb.add_variable(read.get("Name"), Variable(fb))
+        for read_1 in read.iter("VarDeclaration"):
+            print("Bam")
+            fb.add_variable(read_1.get("Name"), Variable(fb))
     for read in root.iter("ECState"):
         fb.ecc.add_state(read.get("Name"), State(read.get("Name")))
         getattr(fb.ecc, read.get("Name")).ec_actions = list()

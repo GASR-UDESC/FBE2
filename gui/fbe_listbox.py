@@ -95,7 +95,8 @@ class FBE_ListBox(Gtk.Box):
         self.pack_start(self.edit_fb_listbox, True, True , 0)
         self.add_button("Add Event", self.add_event, self.fb_editor.edit_fb_window)
         self.add_button("Add Variable", self.add_variable, self.fb_editor.edit_fb_window)
-
+        self.add_button("Change Name", self.change_name, self.fb_editor.edit_fb_window)
+		
     def add_button(self, label, function, box):
         button = Gtk.Button.new_with_label(label)
         button.connect("clicked", function)
@@ -151,6 +152,22 @@ class FBE_ListBox(Gtk.Box):
             # ~ print("The OK button was clicked")
             print(entry)
             self.fb_editor.selected_fb.add_variable(entry, Variable(self.fb_editor.selected_fb, False, in_var = dialog.if_in.get_active()))		
+        elif response == Gtk.ResponseType.CANCEL:
+            # ~ print("The Cancel button was clicked")
+            pass
+
+        dialog.destroy()
+
+    def change_name(self, button):
+        # ~ self.fb_editor.selected_fb.add_event()
+        dialog = AddDialog(self)
+        response = dialog.run()
+        entry = dialog.entry.get_text()
+
+        if response == Gtk.ResponseType.OK:
+            # ~ print("The OK button was clicked")
+            print(entry)
+            self.fb_editor.selected_fb.name = entry		
         elif response == Gtk.ResponseType.CANCEL:
             # ~ print("The Cancel button was clicked")
             pass

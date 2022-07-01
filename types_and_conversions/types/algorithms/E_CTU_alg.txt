@@ -1,8 +1,0 @@
-def reset(self):
-	self.CV.value = 0
-	self.Q.value = 0
-
-def counter(self): 
-	self.CV.value += 1
-	if self.CV.value >= self.PV.value:
-		self.Q.value = 1

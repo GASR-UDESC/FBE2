@@ -95,13 +95,7 @@ class ECC():
                             getattr(self.fb, ec_action[2]).active = False
         if hasattr(self.current_state, "is_initial") != True:
             print("Stopped at " + self.current_state.name)
-            try:
-                print(self.fb.RO.active)
-            except:
-                pass
-
             self.run_ecc(event)
-
         else:
             print("Stopped at " + self.current_state.name +" FB: "+ self.fb.name)
 
@@ -203,7 +197,7 @@ class Event():
         self.selected = False
         self.selected_cn = False
         self.pos = [0,0]
-        
+        self.exec_flag = False 
 
     def activate(self, active=False):
         self.active = active
@@ -239,296 +233,13 @@ class Variable():
         self.connections.add(in_var)
 
 
-class PERMIT(Base_Function_Block):
-    def __init__(self, EI=False, PERMIT=False, name="PERMIT", **kwargs):
-        super().__init__(name, **kwargs)
-
-        # ~ self.EI = Event(EI)
-        self.add_event('EI', Event(self, EI, in_event=True, with_vars=["PERMIT"]))
-        self.add_event('EO', Event(self))	
-
-        self.add_variable('PERMIT', Variable(self, PERMIT, in_var=True))
-
-        self.type = "Basic"
-
-        self.ecc = ECC(self)
-        self.ecc.add_state("START", State("START"))
-        self.ecc.add_state('EO', State('EO', ec_actions=[(None, None, "EO")]))
-        self.ecc.START.add_connection(self.ecc.EO, self.EI, self.PERMIT, "=", 1)
-        self.ecc.EO.add_connection(self.ecc.START, 1)
-        self.ecc.set_current_state(self.ecc.START)
-        self.ecc.START.set_initial_state()
-
-
-#Contador
-class E_CTU(Base_Function_Block):
-    def __init__(self, PV=None, CU=False, R=False, CV=0, Q=False,  name="E_CTU", **kwargs):
-        super().__init__(name, **kwargs)
-
-        self.add_event('CU', Event(self,CU, in_event=True, with_vars=["PV"]))	
-        self.add_event('R', Event(self, R, in_event=True))
-        self.add_event('CUO', Event(self, with_vars=["Q, CV"]))
-        self.add_event('RO', Event(self, with_vars=["Q, CV"]))
-        self.add_variable('PV', Variable(self, PV, in_var=True, var_type="INT"))
-        self.add_variable('Q', Variable(self, Q, var_type="BOOL"))
-        self.add_variable('CV', Variable(self, CV, var_type="INT"))
-        self.type = "Basic"
-
-        self.ecc = ECC(self)
-        self.ecc.add_state("START", State("START"))
-        self.ecc.add_state('CUO', State('CUO', ec_actions=[('CU', None, 'CUO')]))
-        self.ecc.START.add_connection(self.ecc.CUO, self.CU, self.CV,"<",6499)
-        self.ecc.add_state('RO', State('RO', ec_actions=[('R', None, 'RO')]))
-        self.ecc.START.add_connection(self.ecc.RO, self.R)
-        self.ecc.RO.add_connection(self.ecc.START, 1)
-        self.ecc.CUO.add_connection(self.ecc.START, 1)
-        self.ecc.set_current_state(self.ecc.START)
-        self.ecc.START.set_initial_state()
-
-        self.algorithm = {"R": "CV := 0;&#13;&#10;Q := FALSE;", "CU": "CV := CV + 1;&#13;&#10;Q  := (CV &gt;= PV);"}
-
-class E_MERGE(Base_Function_Block):
-    def __init__(self, name="E_MERGE", EI1=False, EI2=False, **kwargs):
-        super().__init__(name, **kwargs)		
-
-        self.add_event("EI1", Event(self, EI1, in_event=True))
-        self.add_event("EI2", Event(self, EI2, in_event=True))
-        self.add_event("EO", Event(self))
-        self.type = "Basic"
-
-        self.ecc = ECC(self)
-        self.ecc.add_state("START", State("START"))
-        self.ecc.add_state("EO", State("EO", ec_actions=[(None, None, 'EO')]))
-        self.ecc.START.add_connection(self.ecc.EO, self.EI1)
-        self.ecc.START.add_connection(self.ecc.EO, self.EI2)
-        self.ecc.EO.add_connection(self.ecc.START, 1)
-        self.ecc.set_current_state(self.ecc.START)
-        self.ecc.START.set_initial_state()
-
-
-#Demultiplexação		
-class E_DEMUX(Base_Function_Block):
-    def __init__(self, EI=False, K=None, name='E_DEMUX', **kwargs):
-        super().__init__(name, **kwargs)
-
-        self.add_event('EI', Event(self, EI, in_event=True, with_vars=["K"]))
-        self.add_event('EO0', Event(self))				
-        self.add_event('EO1', Event(self))
-        self.add_event('EO2', Event(self))
-        self.add_event('EO3', Event(self))
-        self.add_variable('K', Variable(self, K, in_var=True, var_type="INT"))
-        self.type = "Basic"
-
-
-        self.ecc = ECC(self)
-        self.ecc.add_state("START", State("START"))
-        self.ecc.add_state('EO0', State('EI', ec_actions=[(None, None, "EO0")]))
-        self.ecc.add_state('EO1', State('EI', ec_actions=[(None, None, "EO1")]))
-        self.ecc.add_state('EO2', State('EI', ec_actions=[(None, None, "EO2")]))
-        self.ecc.add_state('EO3', State('EI', ec_actions=[(None, None, "EO3")]))
-        self.ecc.add_state('State', State('State'))
-        self.ecc.START.add_connection(self.ecc.state, self.EI)
-        self.ecc.START.add_connection(self.ecc.state, self.EI)
-        self.ecc.START.add_connection(self.ecc.state, self.EI)
-        self.ecc.START.add_connection(self.ecc.state, self.EI)
-        self.ecc.State.add_connection(self.ecc.EO0, 1, self.K, "=", 0)
-        self.ecc.State.add_connection(self.ecc.EO1, 1, self.K, "=", 1)
-        self.ecc.State.add_connection(self.ecc.EO2, 1, self.K, "=", 2)
-        self.ecc.State.add_connection(self.ecc.EO3, 1, self.K, "=", 3)
-        self.EO0.add_connection(self.ecc.START, 1)
-        self.EO1.add_connection(self.ecc.START, 1)
-        self.EO2.add_connection(self.ecc.START, 1)
-        self.EO3.add_connection(self.ecc.START, 1)
-        self.ecc.set_current_state(self.ecc.START)
-        self.ecc.START.set_initial_state()
-
-
-class E_DELAY(Base_Function_Block):
-    def __init__(self, START=False, STOP=False, DT=1, name='E_DELAY', **kwargs):
-        super().__init__(name, **kwargs)
-
-        self.add_event('START', Event(self, START, in_event=True))
-        self.add_event('STOP', Event(self, STOP, in_event=True))
-        self.add_variable('DT', Variable(self, DT, in_var=True, var_type="INT"))
-        self.add_event('EO', Event(self))
-        self.first_run = True
-        self.start_time = None
-        self.type = "Service Interface"
-
-    def algorithm(self):
-        if self.START.active and self.first_run:
-            self.start_time = time.time()
-            self.first_run = False
-        if self.START.active:
-            if time.time()-self.start_time >= self.DT.value:
-                self.EO.active = True
-                self.first_run = True
-        if self.STOP.active:
-            self.first_run = True
-            self.EO.active = False
-        else:
-            self.EO.active = False
-        self.run()
-
-class E_RESTART(Base_Function_Block):
-    def __init__(self, COLD=False, WARM=False, STOP=False, name='E_RESTART', **kwargs):
-        super().__init__(name, **kwargs)
-
-        self.add_event('COLD', Event(self, COLD))
-        self.add_event('WARM', Event(self, WARM))		
-        self.add_event('STOP', Event(self, STOP))
-        self.type = "Service Interface"
-
-    def algorithm(self):
-        self.run()
-
-class E_CYCLE(Base_Function_Block):
-    def __init__(self, DT=None, STOP=None, START=None, name='E_CYCLE', **kwargs):
-        super().__init__(name, **kwargs)
-
-        self.add_event('START', Event(self, START, in_event=True))
-        self.add_event('STOP', Event(self, STOP, in_event=True))
-        self.add_event('EO', Event(self))
-        self.add_variable('DT', Variable(self, DT, in_var=True, var_type="INT"))
-        self.start_time = 0
-        self.running = False
-        self.type = "Service Interface"
-
-    def algorithm(self):
-        if self.START.active:
-            self.running = True
-        if self.STOP.active:
-            self.running = False
-        if self.running:
-            if time.time() - self.start_time >= self.DT.value:
-                self.EO.active = True
-                self.start_time = time.time()
-            else:
-                self.EO.active = False	
-
-        self.run()
-
-
-class IO_WRITER(Base_Function_Block):
-    def __init__(self, INIT=None, REQ=None, QI=None, PARAMS=None, SD_1=None, SD_2=None, name="IO_WRITER", **kwargs):
-        super().__init__(name, **kwargs)
-
-        self.add_event('INIT', Event(self, INIT, in_event=True))
-        self.add_event('REQ', Event(self, REQ, in_event=True))
-        self.add_event('INITO', Event(self))
-        self.add_event('CNF', Event(self))
-        self.add_variable('QI', Variable(self, QI, in_var=True))
-        self.add_variable('PARAMS', Variable(self, PARAMS, in_var=True))
-        self.add_variable('SD_1', Variable(self, SD_1, in_var=True)) # output address
-        self.add_variable('SD_2', Variable(self, SD_2, in_var=True)) # output value
-        self.add_variable('QO', Variable(self))
-        self.add_variable('STATUS', Variable(self))
-        self.add_variable('RD_1', Variable(self))
-        self.type = "Service Interface"
-
-    def algorithm(self):
-        if self.INIT.active:
-            if self.QI and self.REQ:
-                write()
-                self.CNF.active = True
-            else:
-                self.CNF.active = False # needs to be researched, because both CNF and INITO depend on the proper
-                                #functioning of the system. No parameters yet introduced can control this.
-            self.INITO.active = True
-        else:
-            self.INITO.active = False
-        self.run
-
-    def write(self):
-        pass
-
-class IO_READER(Base_Function_Block):
-    def __init__(self, INIT=None, REQ=None, QI=None, PARAMS=None, SD_1=None, name="IO_READER", **kwargs):
-        super().__init__(name, **kwargs)
-
-        self.add_event('INIT', Event(self, INIT, in_event=True))
-        self.add_event('REQ', Event(self, REQ, in_event=True))
-        self.add_event('INITO', Event(self))
-        self.add_event('CNF', Event(self))
-        self.add_variable('QI', Variable(self, QI, in_var=True))
-        self.add_variable('PARAMS', Variable(self, PARAMS, in_var=True))
-        self.add_variable('SD_1', Variable(self, SD_1, in_var=True)) # input address
-        self.add_variable('QO', Variable(self))
-        self.add_variable('STATUS', Variable(self))
-        self.add_variable('RD_1', Variable(self))
-        self.type = "Service Interface"
-
-
-    def algorithm(self):
-        if self.INIT.active:
-            if self.QI and self.REQ:
-                read()
-                self.CNF.active = True
-            else:
-                self.CNF.active = False # needs to be researched, because both CNF and INITO depend on the proper
-                                #functioning of the system. No parameters yet introduced can control this.
-            self.INITO.active = True
-        else:
-            self.INITO.active = False
-        self.run()
-
-    def read(self):
-        try:
-            self.RD_1.value = self.IVAL
-        except:
-            pass # in case we want to use IVAL for input value, instead of the address
-
-
-class PID_SIMPLE(Base_Function_Block):
-    def __init__(self, INIT=None, REQ=None, name="PID_SIMPLE", **kwargs):
-        super().__init__(name, **kwargs)
-
-        self.add_event('INIT', Event(self, INIT, in_event=True))		
-        self.add_event('REQ', Event(self, REQ, in_event=True))
-        self.add_event('INITO', Event(self))		
-        self.add_event('CNF', Event(self))
-        self.type = "Service Interface"	
-
-        # Variables go here
-
-        def algorithm(self):
-            if self.INIT.active:
-                self.INITO.active = True
-            else:
-                self.INITO.active = False	
-            if self.REQ.active:
-                PID_Control()
-                self.CNF.active = True
-
-
-        def PID_Control(self):
-            pass # control function
-
 class world():
     def __init__(self):
-        self.fb_instantiators = {
-                "Base Function Block": Base_Function_Block, 
-                "E_CTU": E_CTU,
-                "PERMIT": PERMIT,
-                "E_MERGE": E_MERGE,
-                "E_DEMUX": E_DEMUX,
-                "E_RESTART": E_RESTART,
-                "E_CYCLE": E_CYCLE,
-                "IO_WRITER": IO_WRITER,
-                "IO_READER": IO_READER,
-                "PID_SIMPLE": PID_SIMPLE,
-                "E_DELAY": E_DELAY,
-                }
 
         self.function_blocks = set()
 
     def add_function_block(self, function_block):
         self.function_blocks.add(function_block)
-
-    def new_function_block(self, fb_id, fb_type):
-        setattr(self, fb_id, self.fb_instantiators[fb_type]())
-        print(self.fb_instantiators[fb_type]())
-        self.add_function_block(getattr(self, fb_id))
 
     def remove_function_block(self, function_block):
         for fb in self.function_blocks:
@@ -589,22 +300,26 @@ class world():
 
     def function_block_states(self, cnt="_"):
         print("-_-_-_-_-"+str(cnt)+"-_-_-_-_-")
-        # ~ for fb in self.function_blocks:
-            # ~ print(fb.name)
-            # ~ for event in fb.events.items():
-                # ~ print(event[0], ':', event[1].active)
-            # ~ for var in fb.variables.items():
-                # ~ print(var[0], ':', var[1].value)
+        for fb in self.function_blocks:
+            print(fb.name)
+            for event in fb.events.items():
+                print(event[0], ':', event[1].active)
+            for var in fb.variables.items():
+                print(var[0], ':', var[1].value)
 
     def simple_run_through(self, i_fb):
         i_fb.run()
         for event in i_fb.events.items():
             if event[1].in_event:
                 if hasattr(i_fb, 'ecc') and event[1].in_event:
-                    event[1].run()
-                    print(event[0])
-                    i_fb.ecc.run_ecc(event[1])
-                    #print(i_fb.name)
+                    if event[1].exec_flag != True:
+                        event[1].run()
+                        print(event[0])
+                        event[1].exec_flag = True
+                        i_fb.ecc.run_ecc(event[1])
+                        #print(i_fb.name)
+                    else:
+                        event[1].exec_flag = False
 
             if event[1].in_event != True:
                 event[1].run()
@@ -621,6 +336,9 @@ class world():
                 if time.time()-timer >= duration:
                     break		
             if time.time() - cycler >= 1/frequency:
+                for fb in self.function_blocks:
+                    for event in fb.events.values():
+                        event.exec_flag = False
                 self.simple_run_through(i_fb)
                 i = i+1
                 self.function_block_states(i)

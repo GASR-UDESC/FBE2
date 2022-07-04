@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import time
+from st_execute import *
 
 class ECC():
     def __init__(self, fb, *args, **kwargs):
@@ -17,82 +18,103 @@ class ECC():
         self.current_state = state
 
     def run_ecc(self, event):
-        print("Ran ECC with" + self.fb.name)
+        print("Ran ECC with " + self.fb.name)
         if 1 in self.current_state.connections.keys():
             self.current_state = self.current_state.connections[1][0][0] # this is the state it's going to
 
         elif event in self.current_state.connections.keys() and event.active:
             for con in self.current_state.connections[event]:    
-
+                print(con)
                 if con[1] == None:
+                    print("1")
                     self.current_state = con[0]
                     for ec_action in self.current_state.ec_actions:
                         getattr(self.fb, ec_action[2]).active = True
-                        if ec_action[1] is not None:
-                            ec_action[1]()
+                        if ec_action[0] is not None:
+                            run_st(self.fb, ec_action[0])
                             # ~ print(ec_action[1])
 
 
                 elif con[2] == "=":
-                    if con[1].value == con[3]:
+                    print("2")
+                    if con[1].value == float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
-                            if ec_action[1] is not None:
-                                ec_action[1]()
+                            if ec_action[0] is not None:
+                                run_st(self.fb, ec_action[0])
                             getattr(self.fb, ec_action[2]).active = True
+                            print("deu reação")
                     else:
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == "!=":
-                    if con[1].value != con[3]:
+                    print("3")
+                    if con[1].value != float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
-                            if ec_action[1] is not None:
-                                ec_action[1]()
+                            if ec_action[0] is not None:
+                                run_st(self.fb, ec_action[0])
                             getattr(self.fb, ec_action[2]).active = True
                     else:
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == ">":
-                    if con[1].value > con[3]:
+                    print("4")
+                    if con[1].value > float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
-                            if ec_action[1] is not None:
-                                ec_action[1]()
+                            if ec_action[0] is not None:
+                                run_st(self.fb, ec_action[0])
                             getattr(self.fb, ec_action[2]).active = True
                     else:
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == "<":
-                    if con[1].value < con[3]:
+                    print("5")
+                    if con[1].value < float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
-                            if ec_action[1] is not None:
-                                ec_action[1]()
+                            if ec_action[0] is not None:
+                                run_st(self.fb, ec_action[0])
                             getattr(self.fb, ec_action[2]).active = True
                     else:
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == ">=":
-                    if con[1].value >= con[3]:
+                    print("6")
+                    if con[1].value >= float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
-                            if ec_action[1] is not None:
-                                ec_action[1]()
+                            if ec_action[0] is not None:
+                                run_st(self.fb, ec_action[0])
                             getattr(self.fb, ec_action[2]).active = True
                     else:
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == "<=":
-                    if con[1].value <= con[3]:
+                    print("7")
+                    if con[1].value <= float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
-                            if ec_action[1] is not None:
-                                ec_action[1]()
+                            if ec_action[0] is not None:
+                                run_st(self.fb, ec_action[0])
                             getattr(self.fb, ec_action[2]).active = True
                     else:
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
+                else:
+                    print("8")
+                    if con[1].value:
+                        self.current_state = con[0]
+                        for ec_action in self.current_state.ec_actions:
+                            if ec_action[0] is not None:
+                                run_st(self.fb, ec_action[0])
+                            getattr(self.fb, ec_action[2]).active = True
+                    else:
+                        for ec_action in con[0].ec_actions:
+                            getattr(self.fb, ec_action[2]).active = False
+                                            
+						
         if hasattr(self.current_state, "is_initial") != True:
             print("Stopped at " + self.current_state.name)
             self.run_ecc(event)
@@ -135,7 +157,7 @@ class Base_Function_Block():
     def add_event(self, name, event):
         self.events[name] = event
         setattr(self, name, event)
-        print("Event Added")
+        # ~ print("Event Added")
 		
     def add_variable(self, name, variable):
         self.variables[name] = variable

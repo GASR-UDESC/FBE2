@@ -46,7 +46,7 @@
       <ST Text="CV := 0;&#13;&#10;Q := FALSE;"/>
     </Algorithm>
     <Algorithm Comment="count up" Name="CU">
-      <ST Text="CV := CV + 1;&#13;&#10;Q  := (CV &gt;= PV);"/>
+      <ST Text="CV := CV + 1;&#13;&#10;Q := (CV &gt;= PV);"/>
     </Algorithm>
   </BasicFB>
 </FBType>

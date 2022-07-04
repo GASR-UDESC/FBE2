@@ -19,81 +19,87 @@ def run_st(fb, alg):
                     getattr(fb, condition_stmnt[0]).value == getattr(fb, condition_stmnt[1]).value
                 except:
                     statement = condition_stmnt[1].split()
-
-                if '>' in statement:
-                    statement.remove(">")
-                    try:
-                        value_1 = int(statement[0])
-                        getattr(fb, condition_stmnt[0]).value = (value_1 > getattr(fb, statement[1]).value)
-                    except:
+                    algorithm_statement = statement
+                    for value in statement:      
+                        if "(" in value:
+                            statement[statement.index(value)] = value[1:len(value)]
+                        if ")" in value:
+                            statement[statement.index(value)] = value[:-1]
+                        
+                    if '>' in statement:
+                        statement.remove(">")
                         try:
-                            value_2 = int(statement[1])
-                            getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value > value_2)
+                            value_1 = float(statement[0])
+                            getattr(fb, condition_stmnt[0]).value = (value_1 > getattr(fb, statement[1]).value)
                         except:
-                            getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value > getattr(fb, statement[1]).value)
-                
-                elif '<' in statement:
-                    statement.remove("<")
-                    try:
-                        value_1 = int(statement[0])
-                        getattr(fb, condition_stmnt[0]).value = (value_1 < getattr(fb, statement[1]).value)
-                    except:
+                            try:
+                                value_2 = float(statement[1])
+                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value > value_2)
+                            except:
+                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value > getattr(fb, statement[1]).value)
+                    
+                    elif '<' in statement:
+                        statement.remove("<")
                         try:
-                            value_2 = int(statement[1])
-                            getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value < value_2)
+                            value_1 = float(statement[0])
+                            getattr(fb, condition_stmnt[0]).value = (value_1 < getattr(fb, statement[1]).value)
                         except:
-                            getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value < getattr(fb, statement[1]).value)
-                
-                elif '>=' in statement:
-                   statement.remove(">=")
-                   try:
-                       value_1 = int(statement[0])
-                       getattr(fb, condition_stmnt[0]).value = (value_1 >= getattr(fb, statement[1]).value)
-                   except:
+                            try:
+                                value_2 = float(statement[1])
+                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value < value_2)
+                            except:
+                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value < getattr(fb, statement[1]).value)
+                    
+                    elif '>=' in statement:
+                       statement.remove(">=")
                        try:
-                           value_2 = int(statement[1])
-                           getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value >= value_2)
+                           value_1 = float(statement[0])
+                           getattr(fb, condition_stmnt[0]).value = (value_1 >= getattr(fb, statement[1]).value)
                        except:
-                           getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value >= getattr(fb, statement[1]).value)
-                
-                elif '<=' in statement:	
-                   statement.remove("<=")
-                   try:
-                       value_1 = int(statement[0])
-                       getattr(fb, condition_stmnt[0]).value = (value_1 <= getattr(fb, statement[1]).value)
-                   except:
+                           try:
+                               value_2 = float(statement[1])
+                               getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value >= value_2)
+                           except:
+                               getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value >= getattr(fb, statement[1]).value)
+                    
+                    elif '<=' in statement:	
+                       statement.remove("<=")
                        try:
-                           value_2 = int(statement[1])
-                           getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value <= value_2)
+                           value_1 = float(statement[0])
+                           getattr(fb, condition_stmnt[0]).value = (value_1 <= getattr(fb, statement[1]).value)
                        except:
-                           getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value <= getattr(fb, statement[1]).value)
-                
-                elif '==' in statement:
-                    statement.remove("==")
-                    try:
-                        value_1 = int(statement[0])
-                        getattr(fb, condition_stmnt[0]).value = (value_1 == getattr(fb, statement[1]).value)
-                    except:
+                           try:
+                               value_2 = float(statement[1])
+                               getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value <= value_2)
+                           except:
+                               getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value <= getattr(fb, statement[1]).value)
+                    
+                    elif '==' in statement:
+                        statement.remove("==")
                         try:
-                            value_2 = int(statement[1])
-                            getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value == value_2)
+                            value_1 = float(statement[0])
+                            getattr(fb, condition_stmnt[0]).value = (value_1 == getattr(fb, statement[1]).value)
                         except:
-                            getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value == getattr(fb, statement[1]).value)
-                
-                elif '!=' in statement:
-                    statement.remove("!=")
-                    try:
-                        value_1 = int(statement[0])
-                        getattr(fb, condition_stmnt[0]).value = (value_1 != getattr(fb, statement[1]).value)
-                    except:
+                            try:
+                                value_2 = float(statement[1])
+                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value == value_2)
+                            except:
+                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value == getattr(fb, statement[1]).value)
+                    
+                    elif '!=' in statement:
+                        statement.remove("!=")
                         try:
-                            value_2 = int(statement[1])
-                            getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value != value_2)
+                            value_1 = float(statement[0])
+                            getattr(fb, condition_stmnt[0]).value = (value_1 != getattr(fb, statement[1]).value)
                         except:
-                            getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value != getattr(fb, statement[1]).value)
-                
-                else:
-                    getattr(fb, condition_stmnt[0]).value = arithmetic(fb,statement)
+                            try:
+                                value_2 = float(statement[1])
+                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value != value_2)
+                            except:
+                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value != getattr(fb, statement[1]).value)
+                    
+                    else:
+                        getattr(fb, condition_stmnt[0]).value = arithmetic(fb,statement)
 
 
 

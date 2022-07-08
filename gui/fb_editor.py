@@ -7,6 +7,7 @@ from function_block.function_block import *
 
 from gui.fb_renderer import Function_Block_Renderer
 from gui.edit_fb_combobox import EditFunctionBlockWindow
+from types_and_conversions.conversions.py_xml import convert_xml_basic_fb
 
 class MouseButtons:
 
@@ -56,8 +57,11 @@ class Function_Block_Editor(Gtk.Box):
                 and e.button == MouseButtons.LEFT_BUTTON:
                     if self.enable_add:
                         try:
-                            self.function_block_renderer.fb_diagram.new_function_block("fb" + str(len(self.function_block_renderer.fb_diagram.function_blocks)), self.selected_fb)
-                            getattr(self.function_block_renderer.fb_diagram, "fb" + str(len(self.function_block_renderer.fb_diagram.function_blocks)-1)).pos = [e.x, e.y]  
+                            print(self.selected_fb)
+                            new_fb = convert_xml_basic_fb("types_and_conversions/types/" + self.selected_fb)
+                            new_fb.pos = [e.x, e.y]
+                            setattr(self.function_block_renderer.fb_diagram, "New_FB" + str(self.fb_count),new_fb)
+                            self.function_block_renderer.fb_diagram.add_function_block(new_fb)
                             self.fb_count = self.fb_count + 1
                         except:
                             pass

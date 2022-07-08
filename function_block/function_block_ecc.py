@@ -1,7 +1,10 @@
 #!/usr/bin/python
 
 import time
-#from types_and_conversions.conversions.st_execute import *
+try:
+    from st_execute import *
+except:
+    from types_and_conversions.conversions.st_execute import *
 
 class ECC():
     def __init__(self, fb, *args, **kwargs):
@@ -18,37 +21,31 @@ class ECC():
         self.current_state = state
 
     def run_ecc(self, event):
-        #print("Ran ECC with " + self.fb.name)
         if 1 in self.current_state.connections.keys():
             self.current_state = self.current_state.connections[1][0][0] # this is the state it's going to
 
         elif event in self.current_state.connections.keys() and event.active:
             for con in self.current_state.connections[event]:    
-                #print(con)
                 if con[1] == None:
-                    #print("1")
                     self.current_state = con[0]
                     for ec_action in self.current_state.ec_actions:
                         getattr(self.fb, ec_action[2]).active = True
                         if ec_action[0] is not None:
                             run_st(self.fb, ec_action[0])
-                            # ~ #print(ec_action[1])
+                            # ~ print(ec_action[1])
 
 
                 elif con[2] == "=":
-                    #print("2")
                     if con[1].value == float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
                             if ec_action[0] is not None:
                                 run_st(self.fb, ec_action[0])
                             getattr(self.fb, ec_action[2]).active = True
-                            #print("deu reação")
                     else:
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == "!=":
-                    #print("3")
                     if con[1].value != float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -59,7 +56,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == ">":
-                    #print("4")
                     if con[1].value > float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -70,7 +66,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == "<":
-                    #print("5")
                     if con[1].value < float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -81,7 +76,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == ">=":
-                    #print("6")
                     if con[1].value >= float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -92,7 +86,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == "<=":
-                    #print("7")
                     if con[1].value <= float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -103,7 +96,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 else:
-                    #print("8")
                     if con[1].value:
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -114,19 +106,9 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                                             
-        elif event.active != True:
-            # ~ print("came here", self.current_state.name, event.block.name)
-            for con in self.current_state.connections[event]:
-                for ec_action in con[0].ec_actions:
-                    # ~ print(ec_action[2])
-                    getattr(self.fb, ec_action[2]).active = False
-			
-							
+						
         if hasattr(self.current_state, "is_initial") != True:
-            #print("Stopped at " + self.current_state.name)
             self.run_ecc(event)
-        else:
-            pass
 
 class State():
     def __init__(self, name, ec_actions=list(), *args, **kwargs): # ec_actions is a list, ec_action is (algorithm_name, algorithm, output)
@@ -336,27 +318,25 @@ class world():
             for var in fb.variables.items():
                 print(var[0], ':', var[1].value)
 
-    def simple_run_through(self, i_fb, draw_fn=None):
+    def simple_run_through(self, i_fb):
         i_fb.run()
         for event in i_fb.events.items():
             if event[1].in_event:
                 if hasattr(i_fb, 'ecc') and event[1].in_event:
-                    if not event[1].exec_flag:
+                    if event[1].exec_flag != True:
                         event[1].run()
                         event[1].exec_flag = True
                         i_fb.ecc.run_ecc(event[1])
-                        if draw_fn != None:	
-                            draw_fn()
-        
+                        #print(i_fb.name)
+                    else:
+                        event[1].exec_flag = False
+
             if event[1].in_event != True:
                 event[1].run()
-                if draw_fn != None:
-                    draw_fn()
                 for i_event in event[1].connections:
-                    if i_event.exec_flag != True:
-                        self.simple_run_through(i_event.block)
+                    self.simple_run_through(i_event.block)
 
-    def execute(self, i_fb, draw_fn=None, frequency=1, duration=10, with_comment=True):
+    def execute(self, frequency, i_fb, duration=0):
         timer = time.time()	
         cycler = time.time()
         i = 0
@@ -367,220 +347,11 @@ class world():
             if time.time() - cycler >= 1/frequency:
                 for fb in self.function_blocks:
                     for event in fb.events.values():
-                        # ~ print("reset")
                         event.exec_flag = False
-                try:
-                    if draw_fn != None:
-                        self.simple_run_through(i_fb, draw_fn)
-                    else:
-                        self.simple_run_through(i_fb)
-                except RecursionError:
-                    break
+                self.simple_run_through(i_fb)
                 i = i+1
-                if with_comment:
-                    self.function_block_states(i)
+                self.function_block_states(i)
                 cycler = time.time()		
-
-# ~ execution specific methods
-
-def run_st(fb, alg):
-    # ~ print(fb.name + ": algorithms been called->" + alg)
-    stripped_alg = strip_algorithm(fb.algorithm)
-    algorithm = stripped_alg[alg]
-    for condition in algorithm:
-        condition_stmnt = condition.split(" := ")
-        if condition_stmnt[1] == "FALSE" or condition_stmnt[1] == "True":
-            getattr(fb, condition_stmnt[0]).value = False
-
-        elif condition_stmnt[1] == "TRUE" or condition_stmnt[1] == "True":
-            getattr(fb, condition_stmnt[0]).value = True
-        else:
-            try:
-                getattr(fb, condition_stmnt[0]).value = float(condition_stmnt[1])
-                # ~ print(getattr(fb, condition_stmnt[0]), "equals float")
-            except:
-                try:
-                    getattr(fb, condition_stmnt[0]).value == getattr(fb, condition_stmnt[1]).value
-                except:
-                    statement = condition_stmnt[1].split()
-                    algorithm_statement = statement
-                    for value in statement:      
-                        if "(" in value:
-                            statement[statement.index(value)] = value[1:len(value)]
-                        if ")" in value:
-                            statement[statement.index(value)] = value[:-1]
-                        
-                    if '>' in statement:
-                        statement.remove(">")
-                        try:
-                            value_1 = float(statement[0])
-                            getattr(fb, condition_stmnt[0]).value = (value_1 > getattr(fb, statement[1]).value)
-                        except:
-                            try:
-                                value_2 = float(statement[1])
-                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value > value_2)
-                            except:
-                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value > getattr(fb, statement[1]).value)
-                    
-                    elif '<' in statement:
-                        statement.remove("<")
-                        try:
-                            value_1 = float(statement[0])
-                            getattr(fb, condition_stmnt[0]).value = (value_1 < getattr(fb, statement[1]).value)
-                        except:
-                            try:
-                                value_2 = float(statement[1])
-                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value < value_2)
-                            except:
-                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value < getattr(fb, statement[1]).value)
-                    
-                    elif '>=' in statement:
-                       statement.remove(">=")
-                       try:
-                           value_1 = float(statement[0])
-                           getattr(fb, condition_stmnt[0]).value = (value_1 >= getattr(fb, statement[1]).value)
-                       except:
-                           try:
-                               value_2 = float(statement[1])
-                               getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value >= value_2)
-                           except:
-                               getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value >= getattr(fb, statement[1]).value)
-                    
-                    elif '<=' in statement:	
-                       statement.remove("<=")
-                       try:
-                           value_1 = float(statement[0])
-                           getattr(fb, condition_stmnt[0]).value = (value_1 <= getattr(fb, statement[1]).value)
-                       except:
-                           try:
-                               value_2 = float(statement[1])
-                               getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value <= value_2)
-                           except:
-                               getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value <= getattr(fb, statement[1]).value)
-                    
-                    elif '==' in statement:
-                        statement.remove("==")
-                        try:
-                            value_1 = float(statement[0])
-                            getattr(fb, condition_stmnt[0]).value = (value_1 == getattr(fb, statement[1]).value)
-                        except:
-                            try:
-                                value_2 = float(statement[1])
-                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value == value_2)
-                            except:
-                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value == getattr(fb, statement[1]).value)
-                    
-                    elif '!=' in statement:
-                        statement.remove("!=")
-                        try:
-                            value_1 = float(statement[0])
-                            getattr(fb, condition_stmnt[0]).value = (value_1 != getattr(fb, statement[1]).value)
-                        except:
-                            try:
-                                value_2 = float(statement[1])
-                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value != value_2)
-                            except:
-                                getattr(fb, condition_stmnt[0]).value = (getattr(fb, statement[0]).value != getattr(fb, statement[1]).value)
-                    
-                    else:
-                        getattr(fb, condition_stmnt[0]).value = arithmetic(fb,statement)
-
-
-
-def arithmetic(fb,test):							
-    # ~ test = "5 + 3 * 3 / 4 - 3"
-    if type(test) != list:
-        test_split = test.split()
-    else:
-        test_split = test
-    while(1):
-		
-        if '(' in test_split:
-            i_1 = test_split.index('(')
-            i_2 = test_split.index(')')
-            new_val = arithmetic(test_split[i_1+1: i_2])
-            del test_split[i_1:i_2+1]
-            test_split.insert(i_1, new_val)
-        elif '*' in test_split:
-            i = test_split.index("*")
-            try:
-                new_val = float(test_split[i-1]) * float(test_split[i+1])
-            except:
-                try:
-                    new_val = float(test_split[i-1]) * getattr(fb, test_split[i+1]).value
-                except:
-                    try:
-                        new_val = getattr(fb, test_split[i-1]).value * float(test_split[i+1])
-                    except:
-                        new_val = getattr(fb, test_split[i-1]).value * getattr(fb, test_split[i+1]).value
-
-            del test_split[i-1:i+2]
-            test_split.insert(i-1, new_val)
-        elif '/' in test_split:
-            i = test_split.index("/")
-            try:
-                new_val = float(test_split[i-1]) / float(test_split[i+1])
-            except:
-                try:
-                    new_val = float(test_split[i-1]) / getattr(fb, test_split[i+1]).value
-                except:
-                    try:
-                        new_val = getattr(fb, test_split[i-1]).value / float(test_split[i+1])
-                    except:
-                        new_val = getattr(fb, test_split[i-1]).value / getattr(fb, test_split[i+1]).value
-            
-            del test_split[i-1:i+2]
-            test_split.insert(i-1, new_val)
-        elif '+' in test_split:
-            i = test_split.index("+")
-            try:
-                new_val = float(test_split[i-1]) + float(test_split[i+1])
-            except:
-                try:
-                    new_val = float(test_split[i-1]) + getattr(fb, test_split[i+1]).value
-                except:
-                    try:
-                        new_val = getattr(fb, test_split[i-1]).value + float(test_split[i+1])
-                    except:
-                        new_val = getattr(fb, test_split[i-1]).value + getattr(fb, test_split[i+1]).value
-            del test_split[i-1:i+2]
-            test_split.insert(i-1, new_val)
-        elif '-' in test_split:
-            i = test_split.index("-")
-            try:
-                new_val = float(test_split[i-1]) - float(test_split[i+1])
-            except:
-                try:
-                    new_val = float(test_split[i-1]) - getattr(fb, test_split[i+1]).value
-                except:
-                    try:
-                        new_val = getattr(fb, test_split[i-1]).value - float(test_split[i+1])
-                    except:
-                        new_val = getattr(fb, test_split[i-1]).value - getattr(fb, test_split[i+1]).value
-            del test_split[i-1:i+2]
-            test_split.insert(i-1, new_val)
-        else:
-            return test_split[0]
-
-
-def strip_algorithm(alg):
-    algorithms = dict()
-    for algorithm in alg.items():
-        algorithms[algorithm[0]] = algorithm[1].split("\r\n") 
-    new = dict()
-    for element in algorithms.items():
-        elmnt = list()
-        for alg in element[1]:
-            elmnt.append(alg.replace(";", ""))
-        new[element[0]] = elmnt
-    algorithms = new
-
-    return algorithms
-
-
-
-
-
 
 
 

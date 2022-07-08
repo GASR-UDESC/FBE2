@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 import xml.etree.ElementTree as ET
-from function_block.function_block import *
 
+from function_block.function_block import *
 
 def convert_basic_fb_xml(fb):
     if getattr(fb, "ecc").states == set():
@@ -31,7 +31,10 @@ def convert_basic_fb_xml(fb):
                 ET.SubElement(read, "VarDeclaration", {"Comment": "", "Name": variable[0], "Type": variable[1].type})
     for read in root.iter("ECC"):
         for state in fb.ecc.states:
-            ET.SubElement(read, "ECState", {"Comment":"", "Name": state.name})
+            init_state = ""
+            if state == fb.ecc.current_state:
+                init_state = "Initial State"
+            ET.SubElement(read, "ECState", {"Comment": init_state, "Name": state.name})
             for read_2 in root.iter("ECState"):
                 print("yes")
                 print(state.ec_actions)
@@ -115,6 +118,7 @@ def convert_basic_fb_xml(fb):
 def import_diagram(xml):
     diagram_name = None
     fb_diagram = world()
+    fb_import_list = set()
     tree = ET.parse(xml)
     root = tree.getroot()	
     for read in root.iter("System"):
@@ -122,6 +126,8 @@ def import_diagram(xml):
 
     for read in root.iter("FB"):
         fb = convert_xml_basic_fb("types_and_conversions/types/"+read.get("Type")+".fbt")
+        fb_import_list.add(read.get("Type") + ".fbt")
+        fb.type = read.get("Type")
         fb.name = read.get("Name")
         setattr(fb_diagram, read.get("Name"), fb)
         fb.pos = [float(read.get("x")), float(read.get("y"))]
@@ -135,10 +141,10 @@ def import_diagram(xml):
 
     for read in root.iter("DataConnections"):
         for con in read.iter("Connection"):
-            in_event = getattr(getattr(fb_diagram, con.get("Source").split(".")[0]), con.get("Source").split(".")[1])
-            out_event = getattr(getattr(fb_diagram, con.get("Destination").split(".")[0]), con.get("Destination").split(".")[1])
-            fb_diagram.connect_events(in_event, out_event)
-    return fb_diagram
+            in_var = getattr(getattr(fb_diagram, con.get("Source").split(".")[0]), con.get("Source").split(".")[1])
+            out_var = getattr(getattr(fb_diagram, con.get("Destination").split(".")[0]), con.get("Destination").split(".")[1])
+            fb_diagram.connect_variables(in_var, out_var)
+    return fb_diagram, fb_import_list
 
 def export_diagram(diagram, directory):
 	diagram_name = "nameless"
@@ -190,33 +196,33 @@ def convert_xml_basic_fb(xml):
     for read in root.iter("EventInputs"):
         for read_1 in read.iter("Event"):	
             event_name = read_1.get("Name")
-            fb.add_event(event_name, Event(fb, None, in_event=True))
+            fb.add_event(event_name, Event(fb, in_event=True))
             getattr(fb, event_name).with_vars = list()
             for read_2 in read_1.iter("With"):
                 getattr(fb, read_1.get("Name")).with_vars.append(read_2.get("Var"))
-                print(getattr(fb, read_1.get("Name")).with_vars)
-                print(read_2.get("Var"))
 
     for read in root.iter("EventOutputs"):
         for read_1 in read.iter("Event"):	
             event_name = read_1.get("Name")
-            fb.add_event(event_name, Event(fb, None, in_event=False))
+            fb.add_event(event_name, Event(fb, in_event=False))
             getattr(fb, event_name).with_vars = list()
             for read_2 in read_1.iter("With"):
                 getattr(fb, read_1.get("Name")).with_vars.append(read_2.get("Var"))
-                print(getattr(fb, read_1.get("Name")).with_vars)
-                print(read_2.get("Var"))
 
     for read in root.iter("InputVars"):
         for read_1 in read.iter("VarDeclaration"):	
             fb.add_variable(read_1.get("Name"), Variable(fb, None, in_var=True))
     for read in root.iter("OutputVars"):
         for read_1 in read.iter("VarDeclaration"):
-            print("bam")
             fb.add_variable(read_1.get("Name"), Variable(fb))
     for read in root.iter("ECState"):
+        print(read.get("Name"))
         fb.ecc.add_state(read.get("Name"), State(read.get("Name")))
         getattr(fb.ecc, read.get("Name")).ec_actions = list()
+        if read.get("Comment") == "Initial State":
+            print("found the initial state")
+            fb.ecc.current_state = getattr(fb.ecc, read.get("Name"))
+            getattr(fb.ecc, read.get("Name")).set_initial_state()
         for read_2 in read.iter("ECAction"):
             getattr(fb.ecc, read.get("Name")).ec_actions.append((read_2.get("Algorithm"), None, read_2.get("Output")))
 
@@ -243,17 +249,13 @@ def convert_xml_basic_fb(xml):
 
     for transition in transitions:
         if transition[0] == "1" and len(transition)==3:
-            print(transition)
             getattr(fb.ecc, transition[2]).add_connection(getattr(fb.ecc, transition[1]), 1)
         elif transition[0] == "1" and len(transition)>3:
-            print(transition)
             getattr(fb.ecc, transition[5]).add_connection(getattr(fb.ecc, transition[4]), 1, getattr(fb, transition[1]), transition[2], transition[3])
 
         elif len(transition)>3:
-            print(transition)
             getattr(fb.ecc, transition[5]).add_connection(getattr(fb.ecc, transition[4]), getattr(fb, transition[0]), getattr(fb, transition[1]), transition[2], transition[3])
         else:
-            print(transition)
             getattr(fb.ecc, transition[2]).add_connection(getattr(fb.ecc, transition[1]), getattr(fb, transition[0]))
 
     for read in root.iter("Algorithm"):

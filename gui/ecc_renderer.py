@@ -52,11 +52,11 @@ class Function_Block_Renderer(Gtk.DrawingArea):
         j=0
         for event in fb.events.keys():
             if fb.events[event].in_event:
-                self.write_txt(wid, cr, event, i_pos_x, 12 + i_pos_y + i*gain, selected_1=fb.events[event].selected, selected_2=fb.events[event].active)
+                self.write_txt(wid, cr, event, i_pos_x, 12 + i_pos_y + i*gain, selected=fb.events[event].selected)
                 fb.events[event].pos = [i_pos_x, 12 + i_pos_y + i*gain]
                 i = i+1 
             else:
-                self.write_txt(wid, cr, event, i_pos_x + h_length - 7*len(event), 12 + i_pos_y + j*gain, selected_1=fb.events[event].selected, selected_2=fb.events[event].active)
+                self.write_txt(wid, cr, event, i_pos_x + h_length - 7*len(event), 12 + i_pos_y + j*gain, selected=fb.events[event].selected)
                 fb.events[event].pos = [i_pos_x + h_length - 7*len(event), 12 + i_pos_y + j*gain]
                 j = j+1
 
@@ -64,11 +64,11 @@ class Function_Block_Renderer(Gtk.DrawingArea):
         j=0
         for var in fb.variables.keys():
             if fb.variables[var].in_var:
-                self.write_txt(wid, cr, var, i_pos_x, 12 + i_pos_y + i*gain + t_vert_length + b_neck_height + gain, selected_1=fb.variables[var].selected)
+                self.write_txt(wid, cr, var, i_pos_x, 12 + i_pos_y + i*gain + t_vert_length + b_neck_height + gain, selected=fb.variables[var].selected)
                 fb.variables[var].pos = [i_pos_x, 12 + i_pos_y + i*gain + t_vert_length + b_neck_height + gain]
                 i = i+1 
             else:
-                self.write_txt(wid, cr, var, i_pos_x + h_length - 7*len(var), 12 + i_pos_y + j*gain + t_vert_length + b_neck_height + gain, selected_1=fb.variables[var].selected)
+                self.write_txt(wid, cr, var, i_pos_x + h_length - 7*len(var), 12 + i_pos_y + j*gain + t_vert_length + b_neck_height + gain, selected=fb.variables[var].selected)
                 fb.variables[var].pos = [i_pos_x + h_length - 7*len(var), 12 + i_pos_y + j*gain + t_vert_length + b_neck_height + gain]
                 j = j+1
 
@@ -136,8 +136,8 @@ class Function_Block_Renderer(Gtk.DrawingArea):
                     cr.stroke()
 
 
-    def write_txt(self, wid, cr, name, i_pos_x, i_pos_y, selected_1=0, selected_2=0):
-        cr.set_source_rgb(selected_1, 0, selected_2)
+    def write_txt(self, wid, cr, name, i_pos_x, i_pos_y, selected=0):
+        cr.set_source_rgb(selected, 0, 0)
         cr.select_font_face('Courier', cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         cr.set_font_size(12)
         cr.move_to(i_pos_x, i_pos_y)

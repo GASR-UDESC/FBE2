@@ -1,19 +1,18 @@
+#from py_xml import strip_algorithm
 
 def run_st(fb, alg):
-    algorithm = fb.algorithm[alg]
+    stripped_alg = strip_algorithm(fb.algorithm)
+    algorithm = stripped_alg[alg]
     for condition in algorithm:
         condition_stmnt = condition.split(" := ")
         if condition_stmnt[1] == "FALSE" or condition_stmnt[1] == "True":
             getattr(fb, condition_stmnt[0]).value = False
-            print("False conditional")	
+
         elif condition_stmnt[1] == "TRUE" or condition_stmnt[1] == "True":
             getattr(fb, condition_stmnt[0]).value = True
-            print("True conditional")
         else:
             try:
                 getattr(fb, condition_stmnt[0]).value == float(condition_stmnt[1])
-                print("equals a float")
-                print(getattr(fb, condition_stmn[0]).value)
             except:
                 try:
                     getattr(fb, condition_stmnt[0]).value == getattr(fb, condition_stmnt[1]).value
@@ -117,7 +116,6 @@ def arithmetic(fb,test):
             new_val = arithmetic(test_split[i_1+1: i_2])
             del test_split[i_1:i_2+1]
             test_split.insert(i_1, new_val)
-            print(test_split)
         elif '*' in test_split:
             i = test_split.index("*")
             try:
@@ -133,7 +131,6 @@ def arithmetic(fb,test):
 
             del test_split[i-1:i+2]
             test_split.insert(i-1, new_val)
-            print(test_split)
         elif '/' in test_split:
             i = test_split.index("/")
             try:
@@ -149,7 +146,6 @@ def arithmetic(fb,test):
             
             del test_split[i-1:i+2]
             test_split.insert(i-1, new_val)
-            print(test_split)
         elif '+' in test_split:
             i = test_split.index("+")
             try:
@@ -161,11 +157,9 @@ def arithmetic(fb,test):
                     try:
                         new_val = getattr(fb, test_split[i-1]).value + float(test_split[i+1])
                     except:
-                        print(test_split[i-1], test_split[i+1])
                         new_val = getattr(fb, test_split[i-1]).value + getattr(fb, test_split[i+1]).value
             del test_split[i-1:i+2]
             test_split.insert(i-1, new_val)
-            print(test_split)
         elif '-' in test_split:
             i = test_split.index("-")
             try:
@@ -180,11 +174,22 @@ def arithmetic(fb,test):
                         new_val = getattr(fb, test_split[i-1]).value - getattr(fb, test_split[i+1]).value
             del test_split[i-1:i+2]
             test_split.insert(i-1, new_val)
-            print(test_split)
         else:
             return test_split[0]
 
+def strip_algorithm(alg):
+    algorithms = dict()
+    for algorithm in alg.items():
+        algorithms[algorithm[0]] = algorithm[1].split("\r\n") 
+    new = dict()
+    for element in algorithms.items():
+        elmnt = list()
+        for alg in element[1]:
+            elmnt.append(alg.replace(";", ""))
+        new[element[0]] = elmnt
+    algorithms = new
 
+    return algorithms
 
 # ~ test = '5 + 3 * ( 2 + 3 ) / 3 - 1'	
 # ~ print(arithmetic(test))

@@ -3,8 +3,6 @@
 import xml.etree.ElementTree as ET
 from function_block_ecc import *
 
-
-
 def convert_basic_fb_xml(fb):
     if getattr(fb, "ecc").states == set():
         tree = ET.parse("types/templates/ServiceInterface.fbt")
@@ -35,7 +33,7 @@ def convert_basic_fb_xml(fb):
             init_state = ""
             if state == fb.ecc.current_state:
                 init_state = "Initial State"
-            ET.SubElement(read, "ECState", {"Comment":"", "Name": state.name})
+            ET.SubElement(read, "ECState", {"Comment": init_state, "Name": state.name})
             for read_2 in root.iter("ECState"):
                 print("yes")
                 print(state.ec_actions)
@@ -139,9 +137,9 @@ def import_diagram(xml):
 
     for read in root.iter("DataConnections"):
         for con in read.iter("Connection"):
-            in_event = getattr(getattr(fb_diagram, con.get("Source").split(".")[0]), con.get("Source").split(".")[1])
-            out_event = getattr(getattr(fb_diagram, con.get("Destination").split(".")[0]), con.get("Destination").split(".")[1])
-            fb_diagram.connect_events(in_event, out_event)
+            in_var = getattr(getattr(fb_diagram, con.get("Source").split(".")[0]), con.get("Source").split(".")[1])
+            out_var = getattr(getattr(fb_diagram, con.get("Destination").split(".")[0]), con.get("Destination").split(".")[1])
+            fb_diagram.connect_variables(in_var, out_var)
     return fb_diagram
 
 def export_diagram(diagram, directory):
@@ -223,6 +221,7 @@ def convert_xml_basic_fb(xml):
         fb.ecc.add_state(read.get("Name"), State(read.get("Name")))
         getattr(fb.ecc, read.get("Name")).ec_actions = list()
         if read.get("Comment") == "Initial State":
+            print("found the initial state")
             fb.ecc.current_state = getattr(fb.ecc, read.get("Name"))
             getattr(fb.ecc, read.get("Name")).set_initial_state()
         for read_2 in read.iter("ECAction"):

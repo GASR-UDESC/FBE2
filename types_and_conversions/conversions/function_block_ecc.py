@@ -18,15 +18,12 @@ class ECC():
         self.current_state = state
 
     def run_ecc(self, event):
-        print("Ran ECC with " + self.fb.name)
         if 1 in self.current_state.connections.keys():
             self.current_state = self.current_state.connections[1][0][0] # this is the state it's going to
 
         elif event in self.current_state.connections.keys() and event.active:
             for con in self.current_state.connections[event]:    
-                print(con)
                 if con[1] == None:
-                    print("1")
                     self.current_state = con[0]
                     for ec_action in self.current_state.ec_actions:
                         getattr(self.fb, ec_action[2]).active = True
@@ -36,19 +33,16 @@ class ECC():
 
 
                 elif con[2] == "=":
-                    print("2")
                     if con[1].value == float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
                             if ec_action[0] is not None:
                                 run_st(self.fb, ec_action[0])
                             getattr(self.fb, ec_action[2]).active = True
-                            print("deu reação")
                     else:
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == "!=":
-                    print("3")
                     if con[1].value != float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -59,7 +53,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == ">":
-                    print("4")
                     if con[1].value > float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -70,7 +63,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == "<":
-                    print("5")
                     if con[1].value < float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -81,7 +73,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == ">=":
-                    print("6")
                     if con[1].value >= float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -92,7 +83,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 elif con[2] == "<=":
-                    print("7")
                     if con[1].value <= float(con[3]):
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -103,7 +93,6 @@ class ECC():
                         for ec_action in con[0].ec_actions:
                             getattr(self.fb, ec_action[2]).active = False
                 else:
-                    print("8")
                     if con[1].value:
                         self.current_state = con[0]
                         for ec_action in self.current_state.ec_actions:
@@ -116,10 +105,7 @@ class ECC():
                                             
 						
         if hasattr(self.current_state, "is_initial") != True:
-            print("Stopped at " + self.current_state.name)
             self.run_ecc(event)
-        else:
-            print("Stopped at " + self.current_state.name +" FB: "+ self.fb.name)
 
 class State():
     def __init__(self, name, ec_actions=list(), *args, **kwargs): # ec_actions is a list, ec_action is (algorithm_name, algorithm, output)
@@ -336,7 +322,6 @@ class world():
                 if hasattr(i_fb, 'ecc') and event[1].in_event:
                     if event[1].exec_flag != True:
                         event[1].run()
-                        print(event[0])
                         event[1].exec_flag = True
                         i_fb.ecc.run_ecc(event[1])
                         #print(i_fb.name)
@@ -346,7 +331,6 @@ class world():
             if event[1].in_event != True:
                 event[1].run()
                 for i_event in event[1].connections:
-                    print(i_event.block.name + " SimpleRunThrough")
                     self.simple_run_through(i_event.block)
 
     def execute(self, frequency, i_fb, duration=0):

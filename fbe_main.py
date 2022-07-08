@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 
 import gi
+import os
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from gi.repository import Gio
 import sys
 from gui.fb_editor import Function_Block_Editor
 from gui.fbe_listbox import FBE_ListBox
-from types_and_conversions.py_xml import *
+from types_and_conversions.conversions.py_xml import *
 
 class Window(Gtk.ApplicationWindow):
     def __init__(self, app):
@@ -20,17 +21,17 @@ class Window(Gtk.ApplicationWindow):
         self.menubar = Gtk.MenuBar()
         self.function_block_editor = Function_Block_Editor()
         fmi = self.create_sub_menu("File")
-        self.create_simple_menu_item(fmi, New=self.quitApp, Export_diagram=self.on_export_diagram, Save_As=None, 
+        self.create_simple_menu_item(fmi, New=self.quitApp, Export_diagram=self.on_export_diagram, Import_Library=self.on_import_library, 
         Import_FB=self.on_import_fb, Import_diagram=self.on_import_diagram)
 
         nmi = self.create_sub_menu('Not File')
         self.create_simple_menu_item(nmi, DONT_SAVE = self.quitApp)
 
-        listbox = FBE_ListBox(self.function_block_editor)
+        self.listbox = FBE_ListBox(self.function_block_editor)
 
         self.box.pack_start(self.menubar, False, True, 0)
         self.box.pack_start(self.function_block_editor, True, True, 0)	
-        self.main_box.pack_start(listbox, False, False, 0)
+        self.main_box.pack_start(self.listbox, False, False, 0)
 
         self.add(self.main_box)
 
@@ -44,10 +45,19 @@ class Window(Gtk.ApplicationWindow):
         setattr(self.function_block_editor.function_block_renderer.fb_diagram, "New_FB_" + str(self.function_block_editor.fb_count), convert_xml_basic_fb(loc))
         self.function_block_editor.function_block_renderer.fb_diagram.add_function_block(convert_xml_basic_fb(loc))
         print(self.function_block_editor.function_block_renderer.fb_diagram.function_blocks)
-        
+        self.listbox.fb_import_list.add(loc.rsplit('/',1)[1])
+
     def load_diagram(self, loc):
-        self.function_block_editor.fb_diagram = import_diagram(loc)
-        self.function_block_editor.function_block_renderer.fb_diagram = import_diagram(loc)
+        # ~ self.function_block_editor.fb_diagram, self.listbox.fb_import_list = import_diagram(loc)
+        self.function_block_editor.function_block_renderer.fb_diagram, new_import= import_diagram(loc)
+        self.listbox.fb_import_list = self.listbox.fb_import_list.union(new_import)
+    def import_library(self, loc):
+        directory = loc
+        for filename in os.listdir(directory):
+            f = os.path.join(directory, filename)
+            if os.path.isfile(f):
+                self.listbox.fb_import_list.add(f.rsplit("/",1)[1])
+        
         
     def create_sub_menu(self, label):
         sub_menu = Gtk.MenuItem.new_with_label(label)
@@ -58,7 +68,8 @@ class Window(Gtk.ApplicationWindow):
         menu = Gtk.Menu()
 
         for label in kwargs.keys():
-            menu_item = Gtk.MenuItem.new_with_label(label)
+            label_name = label.replace("_", " ")
+            menu_item = Gtk.MenuItem.new_with_label(label_name)
             try:
                 menu_item.connect("activate", kwargs[label])
                 menu.append(menu_item)
@@ -69,6 +80,10 @@ class Window(Gtk.ApplicationWindow):
     def on_import_fb(self, widget):
         loc = self.on_file_clicked()
         self.load_function_block(loc)
+        
+    def on_import_library(self, widget):
+        loc = self.on_folder_clicked()
+        self.import_library(loc)
                             
     def on_import_diagram(self, widget):
         loc = self.on_file_clicked()
@@ -84,6 +99,24 @@ class Window(Gtk.ApplicationWindow):
         dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
         self.add_filters(dialog)
         
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            print("Open clicked")
+            print("File selected: " + dialog.get_filename())
+            filename = dialog.get_filename()
+            dialog.destroy()
+            return filename
+            
+        elif response == Gtk.ResponseType.CANCEL:
+            print("Cancel clicked")
+		
+        dialog.destroy()
+        
+    def on_export_clicked(self):
+        dialog = Gtk.FileChooserDialog(title="Function Block File", parent=self, action=Gtk.FileChooserAction.SAVE)
+        dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
+        self.add_filters(dialog)
+        dialog.set_current_name("untitled.xml")
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             print("Open clicked")

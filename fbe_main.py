@@ -21,11 +21,11 @@ class Window(Gtk.ApplicationWindow):
         self.menubar = Gtk.MenuBar()
         self.function_block_editor = Function_Block_Editor()
         fmi = self.create_sub_menu("File")
-        self.create_simple_menu_item(fmi, New=self.quitApp, Export_diagram=self.on_export_diagram, Import_Library=self.on_import_library, 
-        Import_FB=self.on_import_fb, Import_diagram=self.on_import_diagram)
+        self.create_simple_menu_item(fmi, Export_diagram=self.on_export_diagram, Import_Library=self.on_import_library, 
+        Import_FB=self.on_import_fb, Import_diagram=self.on_import_diagram, Quit=self.quitApp)
 
-        nmi = self.create_sub_menu('Not File')
-        self.create_simple_menu_item(nmi, DONT_SAVE = self.quitApp)
+        #nmi = self.create_sub_menu('Quit')
+        #self.create_simple_menu_item(nmi, DONT_SAVE = self.quitApp)
 
         self.listbox = FBE_ListBox(self.function_block_editor)
 
@@ -35,7 +35,7 @@ class Window(Gtk.ApplicationWindow):
 
         self.add(self.main_box)
 
-        self.set_default_size(800, 600)
+        self.set_default_size(1000, 600)
 
     def quitApp(self, par):
 
@@ -90,7 +90,7 @@ class Window(Gtk.ApplicationWindow):
         self.load_diagram(loc)
         
     def on_export_diagram(self, widget):
-        loc = self.on_folder_clicked()
+        loc = self.on_export_clicked()
         export_diagram(self.function_block_editor.function_block_renderer.fb_diagram, loc)
 				
 				
@@ -116,7 +116,7 @@ class Window(Gtk.ApplicationWindow):
         dialog = Gtk.FileChooserDialog(title="Function Block File", parent=self, action=Gtk.FileChooserAction.SAVE)
         dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
         self.add_filters(dialog)
-        dialog.set_current_name("untitled.xml")
+        dialog.set_current_name("untitled.sys")
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             print("Open clicked")

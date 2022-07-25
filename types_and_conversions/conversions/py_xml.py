@@ -178,7 +178,7 @@ def export_diagram(diagram, directory):
 					destination = list(con.block.variables.keys())[list(con.block.variables.values()).index(con)]
 					ET.SubElement(read, "Connection", {"Source": var[1].block.name + "." +var[0] , "Destination": con.block.name + "." + destination, "Comment": "", "dx1": ""})
 			
-	tree.write(directory + "/" + diagram_name + ".sys")		
+	tree.write(directory)		
 			
 	
 def convert_xml_basic_fb(xml):
@@ -211,10 +211,10 @@ def convert_xml_basic_fb(xml):
 
     for read in root.iter("InputVars"):
         for read_1 in read.iter("VarDeclaration"):	
-            fb.add_variable(read_1.get("Name"), Variable(fb, None, in_var=True))
+            fb.add_variable(read_1.get("Name"), Variable(fb, None, in_var=True, var_type=read_1.get("Type")))
     for read in root.iter("OutputVars"):
         for read_1 in read.iter("VarDeclaration"):
-            fb.add_variable(read_1.get("Name"), Variable(fb))
+            fb.add_variable(read_1.get("Name"), Variable(fb, var_type=read_1.get("Type")))
     for read in root.iter("ECState"):
         print(read.get("Name"))
         fb.ecc.add_state(read.get("Name"), State(read.get("Name")))
@@ -235,6 +235,11 @@ def convert_xml_basic_fb(xml):
             transition = transition.replace("]", "") 
             transition_list = transition.split()
             transition_list.insert(0, "1") # [1, var, cond_stmnt, cond]
+        elif "[" in transition:
+            transition = transition.replace("[", " ")
+            transition = transition.replace("]", " ")
+            print(transition)
+            transition_list = transition.split() # [evnt, var, cond_stmnt, cond] or [event, NOT, var]
 
         elif transition[0] != "1":
             transition = transition.replace("[", " ")
@@ -250,11 +255,20 @@ def convert_xml_basic_fb(xml):
     for transition in transitions:
         if transition[0] == "1" and len(transition)==3:
             getattr(fb.ecc, transition[2]).add_connection(getattr(fb.ecc, transition[1]), 1)
+        
         elif transition[0] == "1" and len(transition)>3:
             getattr(fb.ecc, transition[5]).add_connection(getattr(fb.ecc, transition[4]), 1, getattr(fb, transition[1]), transition[2], transition[3])
 
-        elif len(transition)>3:
+        elif len(transition) == 4:
+            getattr(fb.ecc, transition[3]).add_connection(getattr(fb.ecc, transition[2]), getattr(fb, transition[0]), getattr(fb, transition[1]), "=", 1)
+
+        elif len(transition) == 5:
+            getattr(fb.ecc, transition[4]).add_connection(getattr(fb.ecc, transition[3]), getattr(fb, transition[0]), getattr(fb, transition[2]), "!=", 0)
+            print("wham")
+
+        elif len(transition) > 5:
             getattr(fb.ecc, transition[5]).add_connection(getattr(fb.ecc, transition[4]), getattr(fb, transition[0]), getattr(fb, transition[1]), transition[2], transition[3])
+
         else:
             getattr(fb.ecc, transition[2]).add_connection(getattr(fb.ecc, transition[1]), getattr(fb, transition[0]))
 

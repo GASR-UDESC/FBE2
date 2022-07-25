@@ -345,18 +345,18 @@ class world():
                         event[1].run()
                         event[1].exec_flag = True
                         i_fb.ecc.run_ecc(event[1])
-                        if draw_fn != None:	
-                            draw_fn()
+                        # ~ if draw_fn != None:	
+                            # ~ draw_fn()
         
             if event[1].in_event != True:
                 event[1].run()
-                if draw_fn != None:
-                    draw_fn()
+                # ~ if draw_fn != None:
+                    # ~ draw_fn()
                 for i_event in event[1].connections:
                     if i_event.exec_flag != True:
                         self.simple_run_through(i_event.block)
 
-    def execute(self, i_fb, draw_fn=None, frequency=1, duration=10, with_comment=True):
+    def execute(self, i_fb, draw_fn=None, frequency=0.5, duration=10, with_comment=True):
         timer = time.time()	
         cycler = time.time()
         i = 0
@@ -374,6 +374,7 @@ class world():
                         self.simple_run_through(i_fb, draw_fn)
                     else:
                         self.simple_run_through(i_fb)
+                        draw_fn()
                 except RecursionError:
                     break
                 i = i+1

@@ -6,30 +6,46 @@ from gi.repository import Gtk
 from function_block.function_block import Event
 from function_block.function_block import Variable
 from function_block.function_block import world
+from gui.execute_window import ExecuteWindow
 
 class AddDialog(Gtk.Dialog):
-    def __init__(self, parent):
-        super().__init__(title="Add", flags=0)
+    def __init__(self, parent, dialog_type=None):
+        super().__init__(title="", flags=0)
         self.add_buttons(
             Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, Gtk.STOCK_OK, Gtk.ResponseType.OK
         )
+
+        okButton = self.get_widget_for_response(response_id=Gtk.ResponseType.OK)
+        okButton.set_can_default(True)
+        okButton.grab_default()
+
         self.if_in = Gtk.CheckButton()
         if_in_label = Gtk.Label("In")
         self.set_default_size(150, 70)
 
-        self.entry = Gtk.Entry.new()
-        # ~ self.entry_value = self.entry.get_text()
-
+        self.name_entry = Gtk.Entry.new()
+        self.name_entry.set_text("Name")
+        self.name_entry.set_activates_default(True)
         box = self.get_content_area()
-        box.add(self.entry)
-        
-        check_box = Gtk.Box(orientation = Gtk.Orientation.HORIZONTAL)
-        check_box.pack_start(if_in_label, True, True, 0)
-        check_box.pack_start(self.if_in, True, True, 0)
-        
-        box.add(check_box)
-        
-        
+        box.add(self.name_entry)
+        if dialog_type == "Variable":
+            self.type_entry = Gtk.Entry.new()
+            if_in_label = Gtk.Label("In Variable")
+            self.type_entry.set_text("Type")
+            self.type_entry.set_activates_default(True)
+            box.add(self.type_entry)
+            check_box = Gtk.Box(orientation = Gtk.Orientation.HORIZONTAL)
+            check_box.pack_start(if_in_label, True, True, 0)
+            check_box.pack_start(self.if_in, True, True, 0)
+            box.add(check_box)
+			
+        elif dialog_type == "Event":           
+            if_in_label = Gtk.Label("In Event")
+            check_box = Gtk.Box(orientation = Gtk.Orientation.HORIZONTAL)
+            check_box.pack_start(if_in_label, True, True, 0)
+            check_box.pack_start(self.if_in, True, True, 0)
+            box.add(check_box)
+			
         self.show_all()
 		
 		
@@ -62,30 +78,16 @@ class FBE_ListBox(Gtk.Box):
 
 
         listbox.add(row)
-
-        # ~ row = Gtk.ListBoxRow()
-        # ~ hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=20)
-        # ~ row.add(hbox)
-        # ~ label = Gtk.Label(label="Enable/Disable", xalign=0)
-        # ~ check = Gtk.CheckButton()
-        # ~ hbox.pack_start(label, True, True, 0)
-        # ~ hbox.pack_start(check, False, True, 0)
-
-        # ~ listbox.add(row)
+    
         row = Gtk.ListBoxRow()
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         row.add(hbox)
         label = Gtk.Label(label="Function Block Type", xalign=0)
-        # ~ combo = Gtk.ComboBoxText()
-        # ~ self.add_combo_box_item(combo, 0, 'event-driven', "Event Driven")
-        # ~ self.add_combo_box_item(combo, 1, 'service-interface', "Service Interface")
         hbox.pack_start(label, True, True, 0)
-        # ~ hbox.pack_start(combo, False, True, 0)
 
         listbox.add(row) # belongs to Fucntion Block Type
 
         self.add_fb_listbox = Gtk.ListBox()
-        # ~ combo.connect("changed", self.on_type_changed)
 
         self.add_fb_listbox.connect("row-activated", self.on_row_activated)
 
@@ -94,15 +96,19 @@ class FBE_ListBox(Gtk.Box):
         self.add_fb_listbox.show_all()
         
         self.edit_fb_listbox = Gtk.ListBox()
-        row = Gtk.ListBoxRow()
-        row.add(self.fb_editor.edit_fb_window)
+        self.edit_fb_listbox.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.edit_fb_row = Gtk.ListBoxRow()
+        self.edit_fb_row.add(self.fb_editor.edit_fb_window)
 
-        self.edit_fb_listbox.add(row)
-        self.pack_start(self.edit_fb_listbox, True, True , 0)
+        self.edit_fb_listbox.add(self.edit_fb_row)
+        self.pack_start(self.edit_fb_listbox, False, False , 0)
         self.add_button("Add Event", self.add_event, self.fb_editor.edit_fb_window)
         self.add_button("Add Variable", self.add_variable, self.fb_editor.edit_fb_window)
         self.add_button("Change Name", self.change_name, self.fb_editor.edit_fb_window)
-        self.add_button("Execute", self.on_execute, self.fb_editor.edit_fb_window)
+        # ~ self.add_button("Execute", self.on_execute, self.fb_editor.edit_fb_window)
+        # ~ self.exec_window = ExecuteWindow(self.fb_editor.function_block_renderer.fb_diagram)
+        # ~ self.fb_editor.edit_fb_window.pack_start(self.exec_window, True, True, 0)
+		
 		
     def add_button(self, label, function, box):
         button = Gtk.Button.new_with_label(label)
@@ -139,35 +145,36 @@ class FBE_ListBox(Gtk.Box):
             self.add_fb_listbox.show_all()
 	
     def add_event(self, button):
-        dialog = AddDialog(self)
+        dialog = AddDialog(self, dialog_type="Event")
         response = dialog.run()
-        entry = dialog.entry.get_text()
+        name_entry = dialog.name_entry.get_text()
 
         if response == Gtk.ResponseType.OK:
-            print(entry)
-            self.fb_editor.selected_fb.add_event(entry, Event(self.fb_editor.selected_fb, False, in_event = dialog.if_in.get_active()))		
+            print(name_entry)
+            self.fb_editor.selected_fb.add_event(name_entry, Event(self.fb_editor.selected_fb, False, in_event = dialog.if_in.get_active()))		
         elif response == Gtk.ResponseType.CANCEL:
             pass
 
         dialog.destroy()
         
     def add_variable(self, button):
-        dialog = AddDialog(self)
+        dialog = AddDialog(self, dialog_type="Variable")
         response = dialog.run()
-        entry = dialog.entry.get_text()
+        name_entry = dialog.name_entry.get_text()
+        type_entry = dialog.type_entry.get_text()
 
         if response == Gtk.ResponseType.OK:
-            print(entry)
-            self.fb_editor.selected_fb.add_variable(entry, Variable(self.fb_editor.selected_fb, False, in_var = dialog.if_in.get_active()))		
+            print(name_entry)
+            self.fb_editor.selected_fb.add_variable(name_entry, Variable(self.fb_editor.selected_fb, None, in_var = dialog.if_in.get_active(), var_type=type_entry))		
         elif response == Gtk.ResponseType.CANCEL:
             pass
 
         dialog.destroy()
 
     def change_name(self, button):
-        dialog = AddDialog(self)
+        dialog = AddDialog(self, dialog_type="Name")
         response = dialog.run()
-        entry = dialog.entry.get_text()
+        entry = dialog.name_entry.get_text()
 
         if response == Gtk.ResponseType.OK:
             print(entry)
@@ -194,29 +201,13 @@ class FBE_ListBox(Gtk.Box):
             self.rm_fb_button.set_active(False)
 
     def on_row_activated(self, listbox_widget, row):
-        print(row.data)
         self.fb_editor.selected_fb = row.data
 
     def on_execute(self, button):
-		self.fb_editor.function_block_renderer.fb_diagram.E_RESTART.WARM.active = True
-        self.fb_editor.function_block_renderer.fb_diagram.execute(i_fb=self.fb_editor.function_block_renderer.fb_diagram.E_RESTART, draw_fn=self.fb_editor.function_block_renderer.queue_draw)
-		
-    # ~ def on_type_changed(self, combo):
-        # ~ selected = combo.get_active_text()
-        # ~ event_driven = ["PERMIT", "E_CTU", "E_MERGE","E_RESTART", "E_CYCLE", "E_DELAY", "E_DEMUX"]
-        # ~ service_interface = ["IO_WRITER", "IO_READER", "PID_SIMPLE", "Base Function Block"]
-        # ~ selected_type = list()
-        # ~ if selected == 'Event Driven':
-            # ~ selected_type = event_driven
-        # ~ elif selected == 'Service Interface':
-            # ~ selected_type = service_interface
-        # ~ print(self.fb_import_list)
-        # ~ for item in self.add_fb_listbox.get_children():
-            # ~ self.add_fb_listbox.remove(item)
+        self.exec_window = ExecuteWindow(self.fb_editor.function_block_renderer.fb_diagram)
+        self.fb_editor.edit_fb_window.pack_start(self.exec_window, False, False, 0)
+        self.exec_window.listbox.show_all()
 
-        # ~ for item in self.fb_import_list:
-            # ~ self.add_fb_listbox.add(ListBoxRowWithData(item))
-        # ~ self.add_fb_listbox.show_all()
 
     def create_edit_fb_listbox(self, listbox, fb):
         pass
